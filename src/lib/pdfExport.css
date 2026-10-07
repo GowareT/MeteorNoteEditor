@@ -1,0 +1,26 @@
+.mne-pdf-host { position: fixed; inset: 0; z-index: 10000; background: white; overflow: auto; color: #202124; }
+.mne-pdf-status { position: fixed; inset: 0; z-index: 1; display: grid; place-items: center; background: var(--mn-surface, white); color: var(--mn-text, #202124); font-size: 14px; }
+.mne-pdf-document { width: 674px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; color: #202124; color-scheme: light; --mn-text: #202124; --mn-text-secondary: #666; --mn-border: #d8dce2; --mn-surface: #fff; --mn-bg: #fff; --mn-accent: #3375fa; }
+.mne-pdf-document .mn-md { font-size: 15px; line-height: 1.75; color: #202124; padding: 0; }
+.mne-pdf-document .mn-md-heading { break-after: avoid; }
+.mne-pdf-document .mn-md-heading:first-child { margin-top: 0; }
+.mne-pdf-document .mn-md-p { margin: 0 0 12px; orphans: 3; widows: 3; }
+.mne-pdf-document .mn-md-codeblock { white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible; background: #f4f5f7; border: 1px solid #e0e3e7; box-shadow: none; color: #30343b; }
+.mne-pdf-document .mn-md-codeblock code { white-space: pre-wrap; }
+.mne-pdf-document tr, .mne-pdf-document .mn-image-frame { break-inside: avoid; }
+.mne-pdf-document .mn-md-table-wrap { overflow: visible; }
+.mne-pdf-document table { max-width: 100% !important; }
+.mne-pdf-document thead { display: table-header-group; }
+.mne-pdf-document .mn-image-frame { max-width: 100%; }
+.mne-pdf-document img { max-width: 100%; }
+.mne-pdf-document .mn-md-callout { background: var(--mn-callout-bg, #fff6d6); }
+.mne-pdf-document .mn-md-quote { color: #555; font-style: normal; }
+.mne-pdf-document .mn-md-task.is-checked { color: #8e8e93; text-decoration: line-through; }
+@media print {
+  @page { size: A4; margin: 18mm 16mm; }
+  html, body.mne-printing { height: auto !important; overflow: visible !important; background: white !important; }
+  body.mne-printing > :not(.mne-pdf-host) { display: none !important; }
+  body.mne-printing .mne-pdf-host { position: static; overflow: visible; }
+  body.mne-printing .mne-pdf-staging, body.mne-printing .mne-pdf-status { display: none !important; }
+  body.mne-printing .mne-pdf-ready { display: block; width: 100%; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

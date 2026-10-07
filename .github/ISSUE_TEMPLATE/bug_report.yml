@@ -1,0 +1,45 @@
+name: 问题反馈
+description: 报告可以复现的编辑、文件操作或界面问题。
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: 请先搜索已有问题。不要上传私人笔记、密钥或完整个人笔记库；安全漏洞请按 SECURITY.md 私密反馈。
+  - type: input
+    id: version
+    attributes:
+      label: 应用版本或提交编号
+      placeholder: 例如 0.1.0，或源码运行时的提交编号
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 系统与运行方式
+      placeholder: 例如 macOS 15 / Apple Silicon / 源码运行
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      description: 请按操作顺序描述；排版问题可附不含隐私的最小 Markdown 示例。
+      placeholder: |
+        1. 打开……
+        2. 输入……
+        3. 点击……
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      description: 可附已去除敏感内容的截图或错误信息。
+    validations:
+      required: true

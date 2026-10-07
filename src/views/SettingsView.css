@@ -1,0 +1,39 @@
+.mne-settings__body { width: 100%; max-width: 860px; margin: 0 auto; padding: 8px 32px 32px; box-sizing: border-box; }
+.mne-settings__section { padding: 20px 0; border-bottom: 1px solid var(--mn-border); }
+.mne-settings__section h3 { margin: 0 0 8px; color: var(--mn-text-secondary); font-size: 12px; font-weight: 600; }
+.mne-settings__row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 54px; padding: 8px 0; box-sizing: border-box; }
+.mne-settings__row > label, .mne-settings__row > span { color: var(--mn-text); font-weight: 500; }
+.mne-settings__row .mn-seg { background: var(--mn-search-bg); }
+.mne-settings__row .mn-seg button { color: var(--mn-text-secondary); }
+.mne-settings__row .mn-seg button.is-active { background: var(--mn-surface); color: var(--mn-text); box-shadow: none; }
+.mne-settings__row select { min-width: 160px; max-width: 100%; padding: 7px 10px; border: 1px solid var(--mn-border); border-radius: 6px; background: var(--mn-surface); color: var(--mn-text); font: inherit; }
+.mne-settings__font { display: flex; align-items: center; gap: 12px; max-width: 100%; }
+.mne-settings__font input { width: 150px; min-width: 60px; accent-color: var(--mn-accent); }
+.mne-settings__font output { width: 40px; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--mn-text-secondary); }
+.mne-settings__icon { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--mn-text-secondary); cursor: pointer; }
+.mne-settings__icon:hover:not(:disabled) { background: var(--mn-search-bg); color: var(--mn-text); }
+.mne-settings__icon:disabled { opacity: .35; cursor: default; }
+.mne-settings__switch { appearance: none; flex: 0 0 32px; width: 32px; height: 20px; border: 0; border-radius: 10px; margin: 0; padding: 3px; background: var(--mn-border); cursor: pointer; transition: background .15s; }
+.mne-settings__switch::before { content: ""; display: block; width: 14px; height: 14px; border-radius: 50%; background: white; transition: transform .15s; }
+.mne-settings__switch:checked { background: var(--mn-accent); }
+.mne-settings__switch:checked::before { transform: translateX(12px); }
+.mne-settings__switch:disabled { opacity: .5; cursor: wait; }
+.mne-settings__body :focus-visible { outline: 2px solid var(--mn-accent); outline-offset: 3px; }
+.mne-settings__storage > div { min-width: 0; }
+.mne-settings__storage p { margin: 6px 0 0; color: var(--mn-text-secondary); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.mne-settings__storage button { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap; }
+.mne-settings__about { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; padding-top: 22px; font-size: 12px; color: var(--mn-text-secondary); }
+@media (max-width: 620px) {
+  .mne-settings__body { padding: 8px 20px 24px; }
+  .mne-settings__row { flex-wrap: wrap; }
+  .mne-settings__font input { width: 110px; }
+}
+.mne-transfer-actions { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 10px; }
+.mne-transfer-actions button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--mn-border); border-radius: 5px; background: var(--mn-surface); color: var(--mn-text); padding: 8px 10px; font: inherit; cursor: pointer; }
+.mne-transfer-actions button:disabled { opacity: .5; cursor: wait; }
+.mne-transfer-result { overflow-wrap: anywhere; font-size: 12px; line-height: 1.6; }
+.mne-brand-controls { display: flex; align-items: center; gap: 8px; max-width: 100%; min-width: 0; }
+.mne-brand-controls input:not([type="file"]) { width: 220px; min-width: 0; padding: 7px 10px; border: 1px solid var(--mn-border); border-radius: 5px; background: var(--mn-surface); color: var(--mn-text); font: inherit; }
+.mne-brand-controls .mne-settings__icon { flex-shrink: 0; }
+.mne-brand-controls .mn-toolbar-btn { display: inline-flex; align-items: center; gap: 6px; }
+.mne-brand-preview { width: 36px; height: 36px; object-fit: contain; }

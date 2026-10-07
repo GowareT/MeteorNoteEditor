@@ -1,0 +1,155 @@
+:root {
+  /*
+   * 顶栏高度与红绿灯 y 联动（灯约 12px）：
+   * y 为灯顶边；系统灯视觉常偏上
+   * 当前：36px → y=20
+   */
+  --mn-titlebar-height: 36px;
+  --mn-sidebar-width: 240px;
+  /* 收起后下半仅图标宽；上半伸出宽度须盖住灯热区 + 展开按钮，避免重叠 */
+  --mn-sidebar-collapsed: 56px;
+  --mn-sidebar-collapsed-top: 120px;
+  --mn-traffic-lights-width: 82px;
+  /* 与 store 中 SIDEBAR_WIDTH_MIN / MAX 一致 */
+  --mn-sidebar-min: 200px;
+  --mn-sidebar-max: 360px;
+  --mn-side-inset: 10px;
+  --mn-row-radius: 8px;
+  --mn-row-pad-x: 6px;
+  --mn-row-pad-y: 9px;
+  --mn-icon-slot: 15px;
+  --mn-child-indent: 16px;
+
+  --mn-font-ui: "SF Pro Text", "PingFang SC", "Helvetica Neue", system-ui, sans-serif;
+  --mn-font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  --mn-ui-font-size: 13px;
+  --mn-md-h1-scale: 1.35;
+  --mn-md-h2-scale: 1.20;
+  --mn-md-h3-scale: 1.10;
+  --mn-md-h4-scale: 1.05;
+  --mn-md-quote-pad-y: 0.16em;
+  --mn-md-code-pad-y: 0.75em;
+  --mn-md-code-line-height: 1.72;
+  --mn-section-size: calc(var(--mn-ui-font-size) - 1px);
+  --mn-item-size: var(--mn-ui-font-size);
+
+  --mn-bg: #f5f5f7;
+  --mn-surface: #ffffff;
+  --mn-sidebar-bg: #f5f5f7;
+  /* 与侧栏顶栏（红绿灯/收起）同一底色 */
+  --mn-tabbar-bg: #f5f5f7;
+  --mn-search-bg: rgba(0, 0, 0, 0.06);
+  --mn-border: rgba(0, 0, 0, 0.08);
+  --mn-text: #1d1d1f;
+  --mn-text-secondary: #6e6e73;
+  --mn-item: #474747;
+  --mn-icon: #474747;
+  --mn-accent: #007aff;
+  --mn-selected-fg: #007aff;
+  --mn-selected-bg: rgba(0, 122, 255, 0.12);
+  --mn-danger: #ff3b30;
+  --mn-success: #34c759;
+  --mn-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --mn-bg: #1c1c1e;
+    --mn-surface: #2c2c2e;
+    --mn-sidebar-bg: #1c1c1e;
+    --mn-tabbar-bg: #1c1c1e;
+    --mn-search-bg: rgba(255, 255, 255, 0.08);
+    --mn-border: rgba(255, 255, 255, 0.1);
+    --mn-text: #f5f5f7;
+    --mn-text-secondary: #a1a1a6;
+    --mn-item: #b8b8b8;
+    --mn-icon: #b8b8b8;
+    --mn-selected-bg: rgba(10, 132, 255, 0.22);
+    --mn-selected-fg: #0a84ff;
+    --mn-accent: #0a84ff;
+  }
+}
+
+:root[data-theme="dark"] {
+  --mn-bg: #1c1c1e;
+  --mn-surface: #2c2c2e;
+  --mn-sidebar-bg: #1c1c1e;
+  --mn-tabbar-bg: #1c1c1e;
+  --mn-search-bg: rgba(255, 255, 255, 0.08);
+  --mn-border: rgba(255, 255, 255, 0.1);
+  --mn-text: #f5f5f7;
+  --mn-text-secondary: #a1a1a6;
+  --mn-item: #b8b8b8;
+  --mn-icon: #b8b8b8;
+  --mn-selected-bg: rgba(10, 132, 255, 0.22);
+  --mn-selected-fg: #0a84ff;
+  --mn-accent: #0a84ff;
+}
+
+:root[data-theme="light"] {
+  --mn-bg: #f5f5f7;
+  --mn-surface: #ffffff;
+  --mn-sidebar-bg: #f5f5f7;
+  --mn-tabbar-bg: #f5f5f7;
+  --mn-search-bg: rgba(0, 0, 0, 0.06);
+  --mn-border: rgba(0, 0, 0, 0.08);
+  --mn-text: #1d1d1f;
+  --mn-text-secondary: #6e6e73;
+  --mn-item: #474747;
+  --mn-icon: #474747;
+  --mn-selected-bg: rgba(0, 122, 255, 0.12);
+  --mn-selected-fg: #007aff;
+  --mn-accent: #007aff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--mn-font-ui);
+  font-size: var(--mn-ui-font-size);
+  color: var(--mn-text);
+  background: var(--mn-bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}

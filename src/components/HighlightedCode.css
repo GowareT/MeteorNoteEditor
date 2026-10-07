@@ -1,0 +1,36 @@
+.mn-md-codeblock {
+  --mn-code-keyword: #cf222e;
+  --mn-code-string: #0a3069;
+  --mn-code-number: #0550ae;
+  --mn-code-name: #953800;
+  --mn-code-comment: #6a737d;
+  --mn-code-punctuation: #24292f;
+  --mn-code-invalid: #b31d28;
+}
+:root[data-theme="dark"] .mn-md-codeblock {
+  --mn-code-keyword: #ff7b72;
+  --mn-code-string: #a5d6ff;
+  --mn-code-number: #79c0ff;
+  --mn-code-name: #ffa657;
+  --mn-code-comment: #8b949e;
+  --mn-code-punctuation: #c9d1d9;
+  --mn-code-invalid: #ffa198;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .mn-md-codeblock {
+    --mn-code-keyword: #ff7b72;
+    --mn-code-string: #a5d6ff;
+    --mn-code-number: #79c0ff;
+    --mn-code-name: #ffa657;
+    --mn-code-comment: #8b949e;
+    --mn-code-punctuation: #c9d1d9;
+    --mn-code-invalid: #ffa198;
+  }
+}
+.mn-md-codeblock :is(.tok-keyword, .tok-operator) { color: var(--mn-code-keyword); }
+.mn-md-codeblock :is(.tok-string, .tok-string2) { color: var(--mn-code-string); }
+.mn-md-codeblock :is(.tok-number, .tok-bool, .tok-atom, .tok-literal, .tok-propertyName) { color: var(--mn-code-number); }
+.mn-md-codeblock :is(.tok-variableName, .tok-variableName2, .tok-typeName, .tok-className, .tok-namespace, .tok-labelName) { color: var(--mn-code-name); }
+.mn-md-codeblock :is(.tok-comment, .tok-meta) { color: var(--mn-code-comment); font-style: italic; }
+.mn-md-codeblock .tok-punctuation { color: var(--mn-code-punctuation); }
+.mn-md-codeblock .tok-invalid { color: var(--mn-code-invalid); }

@@ -1,0 +1,41 @@
+[package]
+name = "meteor-note-editor"
+version = "0.1.0"
+description = "Local-first Markdown notebook editor"
+license = "MIT"
+authors = ["MeteorNote"]
+edition = "2021"
+
+[lib]
+name = "meteor_note_editor_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset", "tray-icon", "image-png"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+regex = "1"
+base64 = "0.22"
+thiserror = "2"
+sha2 = "0.10"
+pulldown-cmark = "0.13"
+dirs = "6"
+ureq = { version = "2.12", default-features = false, features = ["tls"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSPrintInfo", "NSPrintOperation"] }
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSDictionary", "NSString", "NSURL", "NSGeometry"] }
+objc2-web-kit = { version = "0.3", default-features = false, features = ["std", "WKWebView", "objc2-app-kit"] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true

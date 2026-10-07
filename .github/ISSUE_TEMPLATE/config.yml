@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 安全漏洞反馈
+    url: https://github.com/GowareT/MeteorNoteEditor/security/policy
+    about: 请先阅读安全说明，避免公开漏洞细节或私人数据。

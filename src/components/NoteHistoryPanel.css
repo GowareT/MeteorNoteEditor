@@ -1,0 +1,136 @@
+.mn-history {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: minmax(200px, 280px) 1fr;
+  background: var(--mn-surface);
+  border-top: 1px solid var(--mn-border);
+}
+
+.mn-history__list {
+  border-right: 1px solid var(--mn-border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: color-mix(in srgb, var(--mn-bg) 65%, var(--mn-surface));
+}
+
+.mn-history__head,
+.mn-history__detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--mn-border);
+  flex-shrink: 0;
+}
+
+.mn-history__head strong {
+  font-size: 13px;
+}
+
+.mn-history__head button,
+.mn-history__detail-head .mn-history__restore {
+  border: 1px solid var(--mn-border);
+  background: var(--mn-bg);
+  border-radius: 7px;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  color: var(--mn-text);
+  cursor: default;
+}
+
+.mn-history__head button {
+  width: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.mn-history__restore:disabled {
+  opacity: 0.45;
+}
+
+.mn-history__restore:not(:disabled):hover {
+  border-color: var(--mn-accent);
+  color: var(--mn-accent);
+}
+
+.mn-history__hint,
+.mn-history__err {
+  margin: 12px;
+  font-size: 12px;
+  color: var(--mn-text-secondary);
+}
+
+.mn-history__err {
+  color: #c62828;
+}
+
+.mn-history__list ul {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.mn-history__list li button {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mn-history__list li button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.mn-history__list li button.is-on {
+  background: color-mix(in srgb, var(--mn-accent) 14%, transparent);
+}
+
+.mn-history__time {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mn-text);
+}
+
+.mn-history__preview {
+  font-size: 11px;
+  color: var(--mn-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mn-history__detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.mn-history__body {
+  margin: 0;
+  padding: 16px 18px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.55;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--mn-text);
+}

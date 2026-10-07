@@ -1,0 +1,26 @@
+name: 改进建议
+description: 帮助笔记本更好地完成记录、整理和阅读。
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: 项目希望保持简单，优先改善本地笔记体验。请从具体使用场景出发描述建议。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 当前遇到什么不便？
+      description: 描述你正在完成的任务，以及现有方式的不足。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 希望如何改进？
+      description: 可附简短示例或示意图。
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代方式与补充说明
+      description: 是否有现有功能或其他简单方式可以解决？

@@ -1,0 +1,796 @@
+.mn-cm-editor {
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mn-cm-editor .cm-editor {
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  max-width: none;
+  background: transparent;
+}
+
+.mn-cm-editor .cm-scroller {
+  font-family: inherit;
+  width: 100%;
+  max-width: none;
+}
+
+.mn-cm-editor .cm-content {
+  font-weight: 400;
+  min-height: calc(100% + 22vh);
+  width: 100%;
+  max-width: var(--mn-note-content-max-width, 920px);
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding-bottom: max(22vh, 120px) !important;
+}
+
+.mn-cm-editor .cm-line {
+  line-height: inherit;
+  min-height: 1.84em;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.mn-cm-editor
+  .cm-line:not(.cm-lp-heading-line):not(.cm-lp-list-item):not(
+    .cm-lp-task-item
+  ):not(.cm-lp-codeblock-line):not(.cm-lp-quote):not(.cm-lp-callout):not(
+    .cm-lp-table-meta-line
+  ):not(.cm-lp-align-boundary):not(.cm-lp-hr-line):not(:has(> br:only-child)) {
+  padding-bottom: 0.34em;
+}
+
+.mn-cm-editor .cm-line:has(> br:only-child) {
+  min-height: 2.3em;
+}
+
+.mn-cm-editor.is-source .cm-content {
+  font-variant-ligatures: none;
+}
+
+.mn-cm-editor .cm-lp-hide {
+  opacity: 0;
+  font-size: 0.01px;
+  color: transparent;
+}
+
+/* 标题行：字号 + 上下间距；# 已在预览态 replace 掉，与正文左对齐
+ * 整行加宽可点区域（含左右空白），避免只能点到短标题文字本身。 */
+.mn-cm-editor .cm-line.cm-lp-heading-line {
+  cursor: text;
+  width: 100%;
+}
+
+.mn-cm-editor .cm-line.cm-lp-h1-line {
+  font-size: 1.35em;
+  font-weight: 650;
+  line-height: 1.45;
+  padding-top: 0.72em;
+  padding-bottom: 0.78em;
+  min-height: 2.4em;
+}
+
+.mn-cm-editor .cm-lp-title-meta {
+  width: 100%;
+  max-width: var(--mn-note-content-max-width, 920px);
+  /* Use padding (not margin) so the gap stays inside the widget box and
+     doesn't create a dead zone that steals clicks from nearby headings. */
+  margin: 0.04em auto 0;
+  padding: 0 2px 2.05em;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--mn-text-secondary);
+  font-size: 12px;
+  line-height: 22px;
+  user-select: none;
+  pointer-events: none;
+}
+
+.mn-cm-editor .cm-line.cm-lp-h2-line {
+  font-size: 1.2em;
+  font-weight: 650;
+  line-height: 1.45;
+  padding-top: 1.1em;
+  padding-bottom: 0.7em;
+  min-height: 2.3em;
+}
+
+.mn-cm-editor .cm-line.cm-lp-h3-line {
+  font-size: 1.1em;
+  font-weight: 650;
+  line-height: 1.45;
+  padding-top: 0.95em;
+  padding-bottom: 0.62em;
+  min-height: 2.2em;
+}
+
+.mn-cm-editor .cm-line.cm-lp-h4-line,
+.mn-cm-editor .cm-line.cm-lp-h5-line,
+.mn-cm-editor .cm-line.cm-lp-h6-line {
+  font-size: 1.05em;
+  font-weight: 600;
+  line-height: 1.45;
+  padding-top: 0.8em;
+  padding-bottom: 0.56em;
+  min-height: 2.1em;
+}
+
+/* 列表标记：缩进放在标记自身，避免 line padding 导致选区左溢 */
+.mn-cm-editor .cm-line.cm-lp-list-item {
+  padding-left: 0;
+}
+
+.mn-cm-editor .cm-lp-list-num,
+.mn-cm-editor .cm-lp-list-bullet {
+  display: inline-block !important;
+  min-width: 0;
+  width: auto;
+  margin-left: 0;
+  margin-right: 0.5em;
+  white-space: nowrap;
+  vertical-align: baseline;
+  opacity: 1 !important;
+  font-size: 1em !important;
+  line-height: inherit !important;
+  text-align: left !important;
+}
+
+.mn-cm-editor .cm-lp-list-num,
+.mn-cm-editor .cm-lp-list-num-val {
+  color: var(--mn-accent, #3375fa) !important;
+  font-weight: inherit;
+}
+
+.mn-cm-editor .cm-lp-list-num {
+  display: inline-flex !important;
+  justify-content: flex-start;
+  min-width: 0;
+  margin-left: 0.35em;
+  margin-right: 0.45em;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.mn-cm-editor .cm-lp-table-wrap {
+  overflow-anchor: none;
+}
+
+.mn-cm-editor .cm-lp-cell-editor .cm-editor {
+  display: block;
+  height: auto;
+  min-height: 1.5em;
+  font: inherit;
+  background: transparent;
+}
+
+.mn-cm-editor .cm-lp-cell-editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+.mn-cm-editor .cm-lp-cell-editor .cm-scroller {
+  overflow: hidden;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.mn-cm-editor .cm-lp-cell-editor .cm-content {
+  min-height: 1.5em;
+  padding: 0 !important;
+  margin: 0;
+  width: 100%;
+  font-weight: inherit;
+  text-align: inherit;
+}
+
+.mn-cm-editor .cm-lp-cell-editor .cm-line,
+.mn-cm-editor .cm-lp-cell-editor .cm-line:has(> br:only-child) {
+  min-height: 1.5em;
+  padding: 0 !important;
+  line-height: 1.5;
+}
+
+.mn-cm-editor .cm-lp-list-dot,
+.mn-cm-editor .cm-lp-list-bullet {
+  color: var(--mn-accent, #3375fa) !important;
+}
+
+.mn-cm-editor .cm-lp-list-bullet {
+  font-weight: 700;
+}
+
+.mn-cm-editor .cm-lp-task-marker {
+  display: inline-block !important;
+  position: relative;
+  overflow: hidden;
+  line-height: 0;
+  width: 0.98em;
+  height: 0.98em;
+  min-width: 0.98em;
+  margin: 0 0.58em 0 0.35em;
+  vertical-align: -0.13em;
+  font-size: inherit;
+}
+
+.mn-cm-editor .cm-lp-taskbox {
+  appearance: none;
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  margin: 0;
+  line-height: 0;
+  padding: 0;
+  border: 1.5px solid color-mix(in srgb, var(--mn-text) 36%, transparent);
+  border-radius: 0.22em;
+  background: color-mix(in srgb, var(--mn-surface) 96%, white);
+  box-sizing: border-box;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.mn-cm-editor .cm-lp-taskbox.is-checked {
+  border-color: var(--mn-accent, #3375fa);
+  background: var(--mn-accent, #3375fa);
+}
+
+.mn-cm-editor .cm-lp-taskbox.is-checked::after {
+  position: absolute;
+  left: 50%;
+  top: 43%;
+  content: "";
+  display: block;
+  width: 0.28em;
+  height: 0.5em;
+  border-right: 1.8px solid white;
+  border-bottom: 1.8px solid white;
+  transform: translate(-50%, -50%) rotate(40deg);
+}
+
+.mn-cm-editor .cm-line.cm-lp-task-item.is-checked {
+  color: color-mix(in srgb, var(--mn-text) 58%, transparent);
+}
+
+.mn-cm-editor .cm-lp-task-done-text {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--mn-text) 42%, transparent);
+}
+
+.mn-cm-editor .cm-lp-list-depth-2 {
+  padding-left: 0.9em;
+}
+
+.mn-cm-editor .cm-lp-list-depth-3 {
+  padding-left: 1.8em;
+}
+
+.mn-cm-editor .cm-lp-list-depth-4 {
+  padding-left: 2.7em;
+}
+
+.mn-cm-editor .cm-line.cm-lp-codeblock-line {
+  background: color-mix(in srgb, var(--mn-text) 4.5%, var(--mn-surface)) !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.92em;
+  line-height: 1.65;
+  position: relative;
+  padding: 0;
+  padding-right: 0;
+  box-sizing: border-box;
+  border-left: 1px solid var(--mn-border);
+  border-right: 1px solid var(--mn-border);
+  /* 禁止 margin：会破坏 CM 点击坐标，导致代码块下方点不到 */
+}
+
+.mn-cm-editor
+  .cm-line.cm-lp-codeblock-line:not(.cm-lp-codeblock-first):not(
+    .cm-lp-codeblock-last
+  ) {
+  min-height: 1.65em;
+  overflow: visible;
+}
+
+.mn-cm-editor
+  .cm-line.cm-lp-codeblock-line:not(.cm-lp-codeblock-first):not(
+    .cm-lp-codeblock-last
+  )
+  * {
+  line-height: inherit;
+}
+
+.mn-cm-editor .cm-lp-code-indent,
+.mn-cm-editor .cm-lp-code-indent-right {
+  display: inline-block;
+  width: 1em;
+  pointer-events: none;
+  vertical-align: baseline;
+}
+
+/* 代码块内点击只显示光标，不叠加 activeLine 背景 */
+.mn-cm-editor .cm-line.cm-lp-codeblock-line.cm-activeLine {
+  background: color-mix(in srgb, var(--mn-text) 4.5%, var(--mn-surface)) !important;
+}
+
+/* 首尾 fence 行预览态压扁，并保持代码块上下留白一致 */
+.mn-cm-editor .cm-line.cm-lp-codeblock-first {
+  padding-top: 0;
+  padding-bottom: 0;
+  min-height: 0;
+  height: 0;
+  line-height: 0;
+  overflow: hidden;
+}
+
+.mn-cm-editor .cm-line.cm-lp-codeblock-last {
+  padding-top: 0;
+  padding-bottom: 0;
+  min-height: 0;
+  height: 0;
+  line-height: 0;
+  overflow: hidden;
+}
+
+.mn-cm-editor .cm-line.cm-lp-codeblock-content-first {
+  border-top: 1px solid color-mix(in srgb, var(--mn-text) 8%, transparent);
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  padding-top: 38px;
+}
+
+.mn-cm-editor .cm-line.cm-lp-codeblock-content-last {
+  border-bottom: 1px solid color-mix(in srgb, var(--mn-text) 8%, transparent);
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  padding-bottom: 14px;
+}
+
+.mn-cm-editor
+  .cm-line.cm-lp-codeblock-content-first.cm-lp-codeblock-content-last {
+  min-height: 3.7em;
+}
+
+/* 语言标识：预览态显示在第一行真实代码右上角 */
+.mn-cm-editor .cm-line.cm-lp-codeblock-lang-line[data-lang]::after {
+  content: attr(data-lang);
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  z-index: 2;
+  font-size: 11px;
+  font-family: var(--mn-font-ui, system-ui, sans-serif);
+  font-weight: 550;
+  line-height: 1;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--mn-text-secondary) 78%, transparent);
+  pointer-events: none;
+  user-select: none;
+}
+
+.mn-cm-editor .cm-line.cm-lp-codeblock-copy-line {
+  padding-right: 0;
+}
+
+.mn-cm-editor .cm-lp-code-language {
+  position: absolute;
+  top: 7px;
+  left: 8px;
+  z-index: 2;
+  height: 24px;
+  max-width: calc(100% - 100px);
+  padding: 0 5px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--mn-text-secondary);
+  font: 500 11px/1 var(--mn-font-ui, system-ui, sans-serif);
+  cursor: pointer;
+}
+.mn-cm-editor .cm-lp-code-language:hover {
+  background: color-mix(in srgb, var(--mn-text) 6%, transparent);
+}
+.mn-cm-editor .cm-lp-code-language:focus-visible {
+  outline: 1px solid var(--mn-accent);
+}
+
+.mn-cm-editor .cm-lp-code-copy {
+  position: absolute;
+  right: 0.72em;
+  top: 6px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--mn-text-secondary);
+  font-family: var(--mn-font-ui, system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 22px;
+  cursor: pointer;
+  opacity: 0.66;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease,
+    background 0.12s ease;
+}
+
+.mn-cm-editor .cm-line.cm-lp-codeblock-line:hover .cm-lp-code-copy,
+.mn-cm-editor .cm-lp-code-copy:focus-visible {
+  opacity: 1;
+}
+
+.mn-cm-editor .cm-lp-code-copy:hover {
+  border-color: color-mix(in srgb, var(--mn-text) 8%, transparent);
+  background: color-mix(in srgb, var(--mn-surface) 82%, transparent);
+  color: var(--mn-text);
+}
+
+.mn-cm-editor .cm-lp-code-copy__icon {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+
+.mn-cm-editor .cm-lp-code-copy__icon::before,
+.mn-cm-editor .cm-lp-code-copy__icon::after {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 8px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.mn-cm-editor .cm-lp-code-copy__icon::before {
+  left: 1px;
+  top: 1px;
+  opacity: 0.62;
+}
+
+.mn-cm-editor .cm-lp-code-copy__icon::after {
+  right: 1px;
+  bottom: 1px;
+}
+
+.mn-cm-editor .cm-lp-code-exit {
+  height: 0.55em;
+  cursor: text;
+  background: transparent;
+}
+
+.mn-cm-editor .cm-lp-code-exit:hover {
+  background: color-mix(in srgb, var(--mn-accent) 4%, transparent);
+}
+
+/* 分割线：始终显示横线；光标在行上也不露出 --- */
+.mn-cm-editor .cm-line.cm-lp-hr-line {
+  position: relative;
+  min-height: 1.4em;
+}
+
+.mn-cm-editor .cm-line.cm-lp-hr-line::after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 50%;
+  border-top: 1px solid rgba(128, 128, 128, 0.55);
+}
+
+.mn-cm-editor .cm-line.cm-lp-hr-line.is-active::after {
+  border-top-color: color-mix(
+    in srgb,
+    var(--mn-accent, #3375fa) 55%,
+    rgba(128, 128, 128, 0.55)
+  );
+}
+
+.mn-cm-editor .cm-line.cm-lp-quote,
+.mn-cm-editor .cm-line.cm-lp-callout {
+  position: relative;
+  border-radius: 8px;
+  font-style: normal;
+}
+
+.mn-cm-editor .cm-line.cm-lp-quote {
+  padding: 0.16em 0 0.16em 0.85em;
+  background: color-mix(in srgb, var(--mn-text) 2.5%, transparent);
+}
+
+.mn-cm-editor .cm-line.cm-lp-callout {
+  --mn-callout-bg: #fff6d6;
+  min-height: 1.72em;
+  padding: 0.18em 0.9em 0.18em 2.8em;
+  background: var(--mn-callout-bg);
+  border-radius: 0;
+  line-height: 1.72;
+}
+
+.mn-cm-editor .cm-line.cm-lp-quote::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 8px;
+}
+
+.mn-cm-editor .cm-line.cm-lp-quote::before {
+  background: color-mix(in srgb, var(--mn-text) 18%, transparent);
+}
+
+.mn-cm-editor .cm-line.cm-lp-callout::before {
+  display: none;
+}
+
+.mn-cm-editor .cm-line.cm-lp-callout-head {
+  padding-left: 2.8em;
+}
+
+.mn-cm-editor .cm-line.cm-lp-callout-first {
+  margin-top: 0.58em;
+  padding-top: 0.58em;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.mn-cm-editor .cm-line.cm-lp-callout-last {
+  margin-bottom: 0.82em;
+  padding-bottom: 0.58em;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.mn-cm-editor .cm-line.cm-lp-callout-first.cm-lp-callout-last {
+  border-radius: 6px;
+}
+
+.mn-cm-editor .cm-lp-callout-head-widget {
+  position: absolute;
+  left: 0.9em;
+  top: 0.18em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.34em;
+  height: 1.72em;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: color-mix(in srgb, var(--mn-text) 72%, transparent);
+  font-size: inherit;
+  font-style: normal;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mn-cm-editor .cm-lp-callout-first .cm-lp-callout-head-widget {
+  top: 0.58em;
+}
+
+.mn-cm-editor .cm-lp-callout-head-widget:hover {
+  background: color-mix(in srgb, var(--mn-text) 9%, transparent);
+  color: var(--mn-text);
+}
+
+.mn-cm-editor .cm-lp-callout-head-widget__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: currentColor;
+  font-size: inherit;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mn-cm-editor .cm-lp-callout-head-widget__icon svg {
+  display: block;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.cm-lp-callout-icon-popover {
+  position: fixed;
+  z-index: 30000;
+  width: min(360px, calc(100vw - 16px));
+  max-height: min(390px, 62vh);
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--mn-border);
+  border-radius: 8px;
+  background: var(--mn-surface);
+  color: var(--mn-text);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  box-sizing: border-box;
+}
+
+.cm-lp-callout-icon-popover__title {
+  padding: 1px 2px 8px;
+  color: var(--mn-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.cm-lp-callout-icon-popover__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cm-lp-callout-icon-popover__option {
+  min-width: 0;
+  min-height: 58px;
+  padding: 7px 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mn-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.cm-lp-callout-icon-popover__option:hover,
+.cm-lp-callout-icon-popover__option.is-selected {
+  border-color: color-mix(in srgb, var(--mn-accent, #3375fa) 30%, transparent);
+  background: color-mix(in srgb, var(--mn-accent, #3375fa) 9%, transparent);
+}
+
+.cm-lp-callout-icon-popover__option-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--mn-icon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cm-lp-callout-icon-popover__option-icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.cm-lp-callout-icon-popover__option-label {
+  width: 100%;
+  overflow: hidden;
+  color: var(--mn-text-secondary);
+  font-size: 10px;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mn-cm-editor .cm-lp-image-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  margin: 0.1em 0;
+  line-height: 0;
+  vertical-align: middle;
+  user-select: none;
+  border-radius: 10px;
+}
+
+.mn-cm-editor .cm-lp-image {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  vertical-align: middle;
+}
+
+.mn-cm-editor .cm-lp-image-wrap.is-selected {
+  outline: 2px solid color-mix(in srgb, var(--mn-accent, #3375fa) 70%, white);
+  outline-offset: 3px;
+}
+
+.mn-cm-editor .cm-lp-image-wrap.is-selected .cm-lp-image {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mn-accent, #3375fa) 20%, transparent);
+}
+
+.mn-cm-editor .cm-lp-blank-hint {
+  display: inline;
+  margin: 0;
+  padding: 0 0 0 4px;
+  color: var(--mn-text-secondary);
+  font-size: 1em;
+  font-weight: 400;
+  line-height: inherit;
+  opacity: 0.58;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  vertical-align: baseline;
+}
+
+.mn-cm-editor .cm-lp-blank-hint__body {
+  color: var(--mn-text-secondary);
+  font-weight: 400;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.mn-cm-editor .cm-lp-image-resize {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px 0 3px 0;
+  background: color-mix(in srgb, var(--mn-text) 34%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mn-surface) 90%, transparent);
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.mn-cm-editor .cm-lp-image-wrap:hover .cm-lp-image-resize {
+  opacity: 0.78;
+}
+
+.mn-cm-editor .cm-lp-mark {
+  padding: 0 0.15em;
+  border-radius: 0.2em;
+  background: color-mix(in srgb, #fff2a8 78%, transparent);
+}
+
+.mn-cm-editor .cm-lp-color {
+  font: inherit;
+}
+
+.mn-cm-editor .cm-lp-align-boundary {
+  line-height: 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.mn-cm-editor .cm-lp-align-center {
+  text-align: center;
+}
+
+.mn-cm-editor .cm-lp-align-right {
+  text-align: right;
+}
+.mn-cm-editor.is-reading .cm-cursor, .mn-cm-editor.is-reading .cm-dropCursor { display: none !important; }
+.mn-cm-editor.is-reading .cm-content { caret-color: transparent; }
+.mn-cm-editor.is-reading .cm-lp-table-resize,
+.mn-cm-editor.is-reading .cm-lp-table-add,
+.mn-cm-editor.is-reading .cm-lp-table-actions,
+.mn-cm-editor.is-reading .cm-lp-table-cell-trigger,
+.mn-cm-editor.is-reading .cm-lp-image-toolbar,
+.mn-cm-editor.is-reading .cm-lp-image-resize { display: none !important; }
+.mn-cm-editor.is-reading select { appearance: none; opacity: 1; pointer-events: none; }
+.mn-cm-editor.is-reading button:not([aria-label="复制代码"]) { pointer-events: none; }

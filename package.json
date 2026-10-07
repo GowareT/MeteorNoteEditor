@@ -1,0 +1,52 @@
+{
+  "name": "meteornote-editor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "test": "node scripts/test-editor-formatting.mjs && node scripts/test-code-highlight.mjs && node scripts/test-image-file-picker.mjs && node scripts/test-notebook-deletion.mjs && node scripts/test-trash-dates.mjs && node scripts/test-standalone.mjs && node scripts/test-simplified-features.mjs && node scripts/test-document-sessions.mjs && node scripts/test-library-transfer.mjs && node scripts/test-branding.mjs && node scripts/test-review-regressions.mjs && node scripts/test-platform.mjs && node scripts/test-note-sort.mjs",
+    "notices": "node scripts/generate-notices.mjs"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.10.4",
+    "@codemirror/lang-markdown": "^6.5.1",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/search": "^6.7.1",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.6",
+    "@lezer/highlight": "^1.2.3",
+    "@tauri-apps/api": "^2.5.0",
+    "@tauri-apps/plugin-dialog": "^2.2.1",
+    "@tauri-apps/plugin-shell": "^2.2.1",
+    "clsx": "^2.1.1",
+    "codemirror": "^6.0.2",
+    "katex": "^0.18.1",
+    "lucide-react": "^0.511.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.5.0",
+    "@types/katex": "^0.16.8",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "esbuild": "^0.25.12"
+  },
+  "license": "MIT",
+  "description": "Local-first Markdown notebook editor for macOS"
+}

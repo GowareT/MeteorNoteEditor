@@ -1,0 +1,135 @@
+.mn-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.mn-dialog {
+  width: min(360px, calc(100vw - 32px));
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--mn-surface);
+  border: 1px solid var(--mn-border);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+}
+
+.mn-dialog__title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--mn-text);
+}
+
+.mn-dialog__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--mn-text-secondary);
+}
+
+.mn-dialog__input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid var(--mn-border);
+  background: var(--mn-bg);
+  color: var(--mn-text);
+  font-size: 13px;
+  outline: none;
+}
+
+.mn-dialog__input:focus {
+  border-color: var(--mn-accent);
+}
+
+.mn-dialog__list {
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid var(--mn-border);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 4px;
+}
+
+.mn-dialog__list-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--mn-text);
+  font-size: 13px;
+  cursor: default;
+}
+
+.mn-dialog__list-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.mn-dialog__list-item.is-selected {
+  background: var(--mn-selected-bg);
+  color: var(--mn-selected-fg);
+}
+
+.mn-dialog__empty {
+  margin: 12px;
+  font-size: 13px;
+  color: var(--mn-text-secondary);
+}
+
+.mn-dialog__message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mn-text-secondary);
+  word-break: break-word;
+}
+
+.mn-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.mn-dialog__btn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid var(--mn-border);
+  background: var(--mn-surface);
+  color: var(--mn-text);
+  font-size: 13px;
+}
+
+.mn-dialog__btn.is-primary {
+  background: var(--mn-accent);
+  border-color: var(--mn-accent);
+  color: #fff;
+}
+
+.mn-dialog__btn.is-primary.is-danger {
+  background: var(--mn-danger);
+  border-color: var(--mn-danger);
+}
+
+.mn-dialog__btn:disabled {
+  opacity: 0.4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mn-dialog-backdrop {
+    background: rgba(0, 0, 0, 0.45);
+  }
+  .mn-dialog__list-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}

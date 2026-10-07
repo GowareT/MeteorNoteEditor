@@ -1,0 +1,141 @@
+.mn-window-traffic {
+  width: var(--mn-traffic-lights-width);
+  min-width: var(--mn-traffic-lights-width);
+  height: 15px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.mn-window-traffic.is-custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 16px;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.mn-window-traffic__button {
+  width: 13px;
+  height: 13px;
+  min-width: 13px;
+  min-height: 13px;
+  padding: 0;
+  border: 0.5px solid rgba(0, 0, 0, 0.14);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.mn-window-traffic.is-windows {
+  width: auto;
+  min-width: 0;
+  height: 28px;
+  padding-left: 8px;
+  gap: 2px;
+}
+
+.mn-window-traffic.is-windows .mn-window-traffic__button {
+  width: 28px;
+  height: 24px;
+  border-radius: 3px;
+  border: 0;
+  background: transparent;
+}
+
+.mn-window-traffic.is-windows .mn-window-traffic__glyph { opacity: 1; }
+.mn-window-traffic.is-windows .mn-window-traffic__button:hover { background: rgba(127, 127, 127, 0.2); }
+
+.mn-window-traffic__button.is-close {
+  background: #ff5f57;
+}
+
+.mn-window-traffic__button.is-minimize {
+  background: #febc2e;
+}
+
+.mn-window-traffic__button.is-restore {
+  background: #28c840;
+}
+
+.mn-window-traffic__glyph {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  display: block;
+  opacity: 0;
+  color: rgba(49, 0, 0, 0.66);
+  transition: opacity 60ms linear;
+}
+
+.mn-window-traffic__glyph.is-close::before,
+.mn-window-traffic__glyph.is-close::after {
+  content: "";
+  position: absolute;
+  top: 3.85px;
+  left: 0.75px;
+  width: 7.5px;
+  height: 1.2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.mn-window-traffic__glyph.is-close::before {
+  transform: rotate(45deg);
+}
+
+.mn-window-traffic__glyph.is-close::after {
+  transform: rotate(-45deg);
+}
+
+.mn-window-traffic__glyph.is-minimize {
+  color: rgba(83, 52, 0, 0.72);
+}
+
+.mn-window-traffic__glyph.is-minimize::before {
+  content: "";
+  position: absolute;
+  top: 3.9px;
+  left: 0.6px;
+  width: 7.8px;
+  height: 1.2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.mn-window-traffic__glyph.is-restore {
+  color: rgba(0, 59, 12, 0.72);
+}
+
+.mn-window-traffic__glyph.is-restore i {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.mn-window-traffic__glyph.is-restore i:first-child {
+  top: 0.5px;
+  right: 0.5px;
+  border-width: 0 0 3.5px 3.5px;
+  border-color: transparent transparent currentColor transparent;
+}
+
+.mn-window-traffic__glyph.is-restore i:last-child {
+  bottom: 0.5px;
+  left: 0.5px;
+  border-width: 3.5px 3.5px 0 0;
+  border-color: currentColor transparent transparent transparent;
+}
+
+.mn-window-traffic.is-custom:hover .mn-window-traffic__glyph,
+.mn-window-traffic__button:focus-visible .mn-window-traffic__glyph {
+  opacity: 1;
+}
+
+.mn-window-traffic__button:focus-visible {
+  outline: 2px solid rgba(0, 122, 255, 0.55);
+  outline-offset: 2px;
+}
