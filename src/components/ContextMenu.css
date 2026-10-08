@@ -40,6 +40,24 @@
   min-width: 0;
 }
 
+.mn-context-menu.has-descriptions {
+  width: 292px;
+  max-width: calc(100vw - 16px);
+}
+
+.mn-context-menu.has-descriptions .mn-context-menu__item {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.mn-context-menu__description {
+  display: block;
+  margin-top: 3px;
+  color: var(--mn-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .mn-context-menu__arrow {
   margin-left: 8px;
   color: var(--mn-text-secondary);

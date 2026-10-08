@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { DocumentSessions, type DocumentSession, type PathChange } from "./documentSessions";
@@ -59,9 +60,9 @@ export async function setNoteAppearance(path: string, icon: string, colorHex: st
     await invoke("set_note_appearance", { path, icon, colorHex });
 }
 export async function createNote(notebookPath: string, title?: string): Promise<string> {
-    return invoke<string>("create_note", { notebookPath, title: title ?? null });
+    return invoke<string>("create_note", { notebookPath, title: title ?? t("未命名笔记") });
 }
-export async function createNotebook(preferredName = "新建笔记本", parentPath: string | null = null): Promise<string> {
+export async function createNotebook(preferredName = t("新建笔记本"), parentPath: string | null = null): Promise<string> {
     return invoke<string>("create_notebook", {
         preferredName,
         parentPath,
@@ -146,15 +147,15 @@ export async function searchNotes(query: string): Promise<SearchHit[]> {
     }
     return [...results.values()].slice(0, 500);
 }
-export async function transferLibrary(operation: "import" | "export" | "export-note" | "backup" | "restore", paths: string[]): Promise<TransferResult> {
+export async function transferLibrary(operation: "import" | "export" | "export-note" | "backup" | "restore", paths: string[], targetNotebookPath?: string): Promise<TransferResult> {
     await flushDrafts();
-    return invoke("transfer_library", { operation, paths });
+    return invoke("transfer_library", { operation, paths, targetNotebookPath: targetNotebookPath ?? null });
 }
 export async function saveConflictCopy(path: string): Promise<string> {
     const session = documents.documents.get(path);
-    if (!session) throw new Error("草稿不存在");
+    if (!session) throw new Error(t("草稿不存在"));
     const content = session.draft;
-    const copy = await invoke<string>("copy_note_draft", { path, title: `${path.split("/").pop()} 冲突副本`, content });
+    const copy = await invoke<string>("copy_note_draft", { path, title: t("{0} 冲突副本", path.split("/").pop()), content });
     await documents.open(copy);
     await documents.useDisk(path).catch(() => documents.forget(path));
     return copy;
@@ -179,10 +180,14 @@ export async function recoveredWindowDrafts(): Promise<RecoveredWindowDraft[]> {
 }
 export async function restoreWindowDraft(entry: RecoveredWindowDraft) {
     const path = await invoke<string>("copy_note_draft", {
-        path: entry.path, title: `${entry.path.split("/").pop()} 恢复草稿`, content: entry.draft,
+        path: entry.path, title: t("{0} 恢复草稿", entry.path.split("/").pop()), content: entry.draft,
     });
     await documents.open(path);
     const current: DocumentSession[] = JSON.parse(localStorage.getItem(entry.storageKey) ?? "[]");
     localStorage.setItem(entry.storageKey, JSON.stringify(current.filter(item => item.path !== entry.path || item.draft !== entry.draft)));
     return path;
+}
+
+export async function setAppLanguage(language: "zh-CN" | "en") {
+  if (isTauri()) await invoke("set_app_language", { language });
 }

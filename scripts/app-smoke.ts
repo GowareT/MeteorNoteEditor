@@ -23,6 +23,7 @@ mockIPC((command,payload) => {
       trash=trash.filter(item=>item.id!==args.id);return;
     }
     case 'set_menu_bar_icon_enabled': return;
+    case 'set_app_language': return;
     case 'plugin:window|is_fullscreen': return false;
     case 'plugin:window|is_maximized': return false;
     default: throw new Error(`Unexpected fixture command: ${command}`);

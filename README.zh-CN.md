@@ -8,11 +8,7 @@
 
 打开一篇笔记就能开始写。习惯 Markdown，就直接输入；想少记语法，就用工具栏。文件保存在自己的电脑上，需要时可以导出到其他工具，不需要注册账号或配置服务端。
 
-<!-- 应用截图：将主界面截图保存为 docs/screenshots/overview.png，
-再把下面这行图片引用移到注释外。中英文 README 共用同一张图片。
 ![MeteorNoteEditor macOS 主界面：笔记本侧栏与清爽的 Markdown 编辑页面](docs/screenshots/overview.png)
-其他截图的命名与添加方式见 docs/screenshots/README.md。
--->
 
 ## 为什么做这个笔记本
 
@@ -38,7 +34,7 @@
 
 在笔记右上角的“更多”菜单中切换。支持常见 Markdown 内容；合并表格、图片裁剪、颜色和对齐等扩展在其他编辑器中可能显示不同，详见 [使用指南](docs/USER_GUIDE.md)。
 
-应用界面目前为简体中文。笔记正文可以使用英文、中文或中英混排；README 的语言不影响应用界面语言。
+应用界面支持简体中文和英文。在 **设置 → 语言 / Language** 中选择 **English**，即可切换菜单、对话框、编辑器提示和应用消息；选择会自动记住，已有笔记正文和名称保持原样。
 
 ## 平台状态
 
@@ -49,10 +45,13 @@
 | macOS | 已进行本地开发与构建验证；构建配置要求 macOS 12.0 及以上，未逐一验证所有系统版本 |
 | Windows | 已加入兼容性处理、NSIS 安装包配置和构建工作流；尚未完成 Windows 实机验收 |
 | Linux | 尚未验证，未提供专用打包配置 |
+| 浏览器 | 支持编辑器预览与开发测试页；应用测试页使用临时内存笔记，尚未实现可持久保存的独立网页版笔记本 |
 
 直接导出 PDF 目前仅支持 macOS。Windows 工作流的存在不代表构建已经通过；已执行的检查与限制见 [验证记录](docs/VERIFICATION.md)。
 
 ## 从源码运行
+
+### 桌面应用
 
 需要 **Node.js 20**、npm、Rust stable，以及对应平台的 Tauri 开发依赖：
 
@@ -70,8 +69,6 @@ npm run tauri:dev
 
 这会打开桌面应用，并在修改代码后自动更新。使用 nvm 的开发者可先运行 `nvm use`，仓库已提供 `.nvmrc`。
 
-`npm run dev` 仅启动端口为 `5183` 的前端开发服务，不能作为完整的网页版笔记本使用；笔记文件读写依赖 Tauri 桌面环境。
-
 打包当前平台的应用：
 
 ```sh
@@ -81,6 +78,22 @@ npm run tauri:build
 产物位于 `src-tauri/target/release/bundle/`。平台依赖、测试和发布准备见 [开发指南](docs/DEVELOPMENT.md)。
 
 项目从 MeteorNote 独立提取，可独立运行，基于 React、TypeScript、CodeMirror 6 和 Tauri 2 构建。
+
+### 浏览器预览
+
+编辑器可以在浏览器中运行。体验开发预览只需安装 Node.js 20 和 npm，在仓库根目录运行以下命令，不需要安装 Rust 或桌面原生构建工具：
+
+```sh
+npm ci
+npm run dev
+```
+
+然后打开对应页面：
+
+- `http://localhost:5183/scripts/app-smoke.html`：使用隔离测试数据，体验示例笔记编辑及部分应用流程。
+- `http://localhost:5183/scripts/editor-regression.html`：体验编辑器示例，运行格式与交互检查。
+
+示例笔记库保存在内存中，刷新页面后会重置。部分偏好和草稿恢复数据可能留在浏览器存储中，但这不等于完整的笔记库持久保存。普通应用入口 `http://localhost:5183/` 的笔记存储和桌面命令仍依赖 Tauri。完整网页版还需要独立的存储与文件导入导出实现，直接部署 `dist/` 不能获得这些能力。
 
 ## 笔记保存在哪里
 

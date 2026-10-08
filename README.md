@@ -8,11 +8,7 @@ Tired of note apps packed with features you never use, but still want the clean 
 
 Open a note, write, and read it comfortably. Use Markdown or the editing toolbar, keep your files locally, and take them to another tool whenever you like. No account or server setup is required.
 
-<!-- Screenshots: save the main application screenshot as docs/screenshots/overview.png,
-then move the following image line outside this comment. Use the same image in both READMEs.
 ![MeteorNoteEditor on macOS: notebook sidebar and a clean Markdown editing page](docs/screenshots/overview.png)
-See docs/screenshots/README.md for optional screenshots and capture guidance.
--->
 
 ## Why this notebook?
 
@@ -38,7 +34,7 @@ Development priorities are editing, reading, and keeping notes safe. Everyday im
 
 Switch modes from the More (更多) menu at the top right of a note. Common Markdown content is supported. Extensions such as merged table cells, image cropping, colors, and alignment may render differently in other editors. See the [user guide (Chinese)](docs/USER_GUIDE.md) for details.
 
-The application interface is currently in Simplified Chinese. Notes can contain English, Chinese, or a mixture of both; the README language does not change the application language.
+The interface supports English and Simplified Chinese. Choose **Settings → Language → English** to switch menus, dialogs, editor hints, and app messages. The choice is saved locally; note content and names stay unchanged.
 
 ## Platform status
 
@@ -49,10 +45,13 @@ The current project version is `0.1.0` and is still under development.
 | macOS | Local development and build checks completed. The build configuration requires macOS 12.0 or later; not every OS version has been tested. |
 | Windows | Compatibility handling, NSIS packaging configuration, and a build workflow are included. Native Windows acceptance testing is still pending. |
 | Linux | Not verified; no dedicated packaging configuration is provided. |
+| Browser | Editor preview and development test pages are available. The app test page uses temporary in-memory notes; a standalone web notebook with persistent storage is not implemented. |
 
 Direct PDF export is currently available only on macOS. The presence of a Windows workflow does not mean its builds have passed. See the [verification notes (Chinese)](docs/VERIFICATION.md) for completed checks and limitations.
 
 ## Run from source
+
+### Desktop application
 
 Install **Node.js 20**, npm, stable Rust, and the Tauri prerequisites for your platform:
 
@@ -70,8 +69,6 @@ npm run tauri:dev
 
 This opens the desktop application with hot reload. If you use nvm, run `nvm use` first; the repository includes an `.nvmrc` file.
 
-`npm run dev` starts only the frontend development server on port `5183`. It is not a complete browser version of the notebook: reading and writing note files requires the Tauri desktop environment.
-
 Build the application for your current platform:
 
 ```sh
@@ -81,6 +78,22 @@ npm run tauri:build
 Build artifacts are written to `src-tauri/target/release/bundle/`. See the [development guide (Chinese)](docs/DEVELOPMENT.md) for testing, packaging, and release preparation.
 
 The project was extracted from MeteorNote and runs independently. It is built with React, TypeScript, CodeMirror 6, and Tauri 2.
+
+### Browser preview
+
+The editor can run in a browser. To try the development preview, install Node.js 20 and npm, then run these commands from the repository root; Rust and the native desktop build tools are not needed for this preview:
+
+```sh
+npm ci
+npm run dev
+```
+
+Open one of these pages:
+
+- `http://localhost:5183/scripts/app-smoke.html`: try editing the sample note and selected application flows with isolated test data.
+- `http://localhost:5183/scripts/editor-regression.html`: try the editor examples and run formatting and interaction checks.
+
+The sample note library lives in memory and resets when the page reloads. Some preferences and draft recovery data may remain in browser storage, but this is not a persistent web notebook. The normal application entry at `http://localhost:5183/` still expects Tauri for note storage and desktop commands. A complete browser edition would need its own storage and file import/export implementation; deploying `dist/` alone does not provide that functionality.
 
 ## Where notes are stored
 

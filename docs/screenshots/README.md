@@ -4,7 +4,9 @@
 
 应用效果截图统一放在这个目录：`docs/screenshots/`。它们是项目介绍用的图片，随仓库一起提交；应用图标仍放在原来的 `public/` 和 `src-tauri/icons/` 中。
 
-目前尚未加入应用效果截图。两份 README 的开头已预留图片引用，实际图片放入后再启用，避免显示失效图片。
+已加入主界面截图 `overview.png`，中英文 README 开头均已展示。更新主图时替换同名文件即可。
+
+![MeteorNoteEditor 应用主界面](overview.png)
 
 ## 文件命名与展示内容
 
@@ -23,7 +25,7 @@
 
 1. 在真实应用中截图。macOS 可按 `⌘ ⇧ 4`，再按空格，选择应用窗口。
 2. 将主图命名为 `overview.png`，放入当前目录。其他截图使用上表中的名称。
-3. 打开根目录的 `README.md` 和 `README.zh-CN.md`，找到开头的截图注释，把其中的图片引用移到 `<!-- ... -->` 注释外。
+3. 两份根目录 README 已引用 `overview.png`，替换主图不需要修改引用。添加其他截图或更改文件名时，同步两份 README 的图片路径；图片引用应放在 `<!-- ... -->` 注释外。
 4. 预览两份 Markdown，确认图片正常显示，再一起提交图片和文档。
 
 中文 README 的引用：
@@ -52,6 +54,6 @@
 
 Store application screenshots in `docs/screenshots/`. Start with `overview.png`: a real application window with a simple sample note that shows the clean writing layout. Optional images are `editing.png`, `dark-mode.png`, and `source-mode.png`.
 
-Both root READMEs already contain a commented image reference near the top. After adding the image, move that reference outside the HTML comment in each README, check the preview, and commit the images together with the documentation. Both language versions can use the same screenshots.
+The main screenshot, `overview.png`, is already displayed near the top of both root READMEs. Replace that file to update the main image. For additional screenshots or filename changes, update both READMEs, keep image references outside HTML comments, and check the preview. Both language versions use the same screenshots.
 
-Use sample content without personal information. Aim for a readable 1440–1920 px image and roughly 1 MB per screenshot. Prefer PNG for text-heavy screenshots; if you use WebP, update the references accordingly. No application screenshots have been added yet.
+Use sample content without personal information. Aim for a readable 1440–1920 px image and roughly 1 MB per screenshot. Prefer PNG for text-heavy screenshots; if you use WebP, update the references accordingly.

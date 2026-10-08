@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import {
   autocompletion,
   startCompletion,
@@ -19,29 +20,29 @@ type SlashItem = {
 };
 
 const SLASH_ITEMS: SlashItem[] = [
-  { label: "/标题1", detail: "一级标题", insert: "# " },
-  { label: "/标题2", detail: "二级标题", insert: "## " },
-  { label: "/标题3", detail: "三级标题", insert: "### " },
-  { label: "/无序列表", detail: "列表项", insert: "- " },
-  { label: "/有序列表", detail: "编号列表", insert: "1. " },
-  { label: "/任务", detail: "待办勾选", insert: "- [ ] " },
-  { label: "/引用", detail: "引用块", insert: "> " },
-  { label: "/链接", detail: "Markdown 链接", insert: "[链接文字](https://)" },
-  { label: "/图片", detail: "本地或网络图片", action: "image", insert: "" },
-  { label: "/提示", detail: "高亮提示块", insert: "> [!note:#fff6d6:lightbulb] 在这里输入内容" },
-  { label: "/代码块", detail: "围栏代码", insert: "```\n\n```\n" },
-  { label: "/分割线", detail: "水平线", insert: "\n---\n\n" },
-  { label: "/粗体", detail: "加粗", insert: "****" },
-  { label: "/斜体", detail: "斜体", insert: "**" },
-  { label: "/下划线", detail: "下划线", insert: "<u></u>" },
-  { label: "/删除线", detail: "删除线", insert: "~~~~" },
-  { label: "/高亮", detail: "高亮文本", insert: "====" },
-  { label: "/行内公式", detail: "KaTeX $...$", insert: "$$" },
-  { label: "/块公式", detail: "KaTeX $$...$$", insert: "$$\n\n$$" },
+  { get label() { return t("/标题1"); }, get detail() { return t("一级标题"); }, insert: "# " },
+  { get label() { return t("/标题2"); }, get detail() { return t("二级标题"); }, insert: "## " },
+  { get label() { return t("/标题3"); }, get detail() { return t("三级标题"); }, insert: "### " },
+  { get label() { return t("/无序列表"); }, get detail() { return t("列表项"); }, insert: "- " },
+  { get label() { return t("/有序列表"); }, get detail() { return t("编号列表"); }, insert: "1. " },
+  { get label() { return t("/任务"); }, get detail() { return t("待办勾选"); }, insert: "- [ ] " },
+  { get label() { return t("/引用"); }, get detail() { return t("引用块"); }, insert: "> " },
+  { get label() { return t("/链接"); }, get detail() { return t("Markdown 链接"); }, get insert() { return t("[链接文字](https://)"); } },
+  { get label() { return t("/图片"); }, get detail() { return t("本地或网络图片"); }, action: "image", insert: "" },
+  { get label() { return t("/提示"); }, get detail() { return t("高亮提示块"); }, get insert() { return t("> [!note:#fff6d6:lightbulb] 在这里输入内容"); } },
+  { get label() { return t("/代码块"); }, get detail() { return t("围栏代码"); }, insert: "```\n\n```\n" },
+  { get label() { return t("/分割线"); }, get detail() { return t("水平线"); }, insert: "\n---\n\n" },
+  { get label() { return t("/粗体"); }, get detail() { return t("加粗"); }, insert: "****" },
+  { get label() { return t("/斜体"); }, get detail() { return t("斜体"); }, insert: "**" },
+  { get label() { return t("/下划线"); }, get detail() { return t("下划线"); }, insert: "<u></u>" },
+  { get label() { return t("/删除线"); }, get detail() { return t("删除线"); }, insert: "~~~~" },
+  { get label() { return t("/高亮"); }, get detail() { return t("高亮文本"); }, insert: "====" },
+  { get label() { return t("/行内公式"); }, detail: "KaTeX $...$", insert: "$$" },
+  { get label() { return t("/块公式"); }, detail: "KaTeX $$...$$", insert: "$$\n\n$$" },
   {
-    label: "/表格",
-    detail: "插入 Markdown 表格",
-    insert: "| 列1 | 列2 |\n| --- | --- |\n|  |  |",
+    get label() { return t("/表格"); },
+    get detail() { return t("插入 Markdown 表格"); },
+    get insert() { return t("| 列1 | 列2 |\n| --- | --- |\n|  |  |"); },
   },
 ];
 
@@ -60,10 +61,10 @@ function applySnippet(
   if (insert === "$$") cursorOffset = 1;
   if (insert === "$$\n\n$$") cursorOffset = 3;
   if (insert === "```\n\n```" || insert === "```\n\n```\n") cursorOffset = 4;
-  if (insert === "[链接文字](https://)") cursorOffset = 1;
-  if (insert === "![图片]()") cursorOffset = insert.length - 1;
-  if (insert.startsWith("> [!note")) cursorOffset = insert.indexOf("在这里输入内容");
-  if (insert.startsWith("| 列1 |")) cursorOffset = insert.indexOf("\n|  |") + 4;
+  if (insert === t("[链接文字](https://)")) cursorOffset = 1;
+  if (insert === t("![图片]()")) cursorOffset = insert.length - 1;
+  if (insert.startsWith("> [!note")) cursorOffset = insert.indexOf(t("在这里输入内容"));
+  if (insert.startsWith(t("| 列1 |"))) cursorOffset = insert.indexOf("\n|  |") + 4;
   view.dispatch({
     changes: { from, to, insert },
     selection: { anchor: from + cursorOffset },
@@ -95,9 +96,9 @@ export function slashCompletions(
       type: "keyword",
       boost: item.action ? 2 : 1,
       apply: (view, _completion, from, to) => {
-        if (item.label === "/任务" || item.label === "/提示") {
+        if (item.label === t("/任务") || item.label === t("/提示")) {
           view.dispatch({ changes: { from, to, insert: "" }, selection: { anchor: from } });
-          applyFormat(view, item.label === "/任务" ? { type: "todo" } : { type: "insert", kind: "callout" });
+          applyFormat(view, item.label === t("/任务") ? { type: "todo" } : { type: "insert", kind: "callout" });
           return;
         }
         if (item.action) {

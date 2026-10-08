@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { revealFolderLabel } from "@/lib/platform";
 import { useCallback, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, } from "react";
 import clsx from "clsx";
@@ -244,7 +245,7 @@ function NotebookTree({ nodes, depth, query, dragState, dropState, onNotebookCon
                     title: nb.name,
                     parentPath: nb.parentPath,
                 }} className={clsx(notebookDrop === "before" && "is-drop-before", notebookDrop === "after" && "is-drop-after", notebookDrop === "into" && "is-drop-into")} icon={<span className="mn-tree-folder">
-                  {childrenVisible || nb.notes.length > 0 ? (<span className="mn-tree-chevron" role="button" aria-label={open ? "收起" : "展开"} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => {
+                  {childrenVisible || nb.notes.length > 0 ? (<span className="mn-tree-chevron" role="button" aria-label={open ? t("收起") : t("展开")} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => {
                             e.stopPropagation();
                             toggleNotebook(nb.id);
                         }}>
@@ -355,11 +356,11 @@ export function Sidebar() {
     const promptRenameNotebook = useCallback((path: string, value: string) => {
         setPrompt({ kind: "rename-notebook", path, value });
     }, []);
-    const createAndPromptNote = useCallback(async (create: () => Promise<string>, fallback = "未命名笔记") => {
+    const createAndPromptNote = useCallback(async (create: () => Promise<string>, fallback = t("未命名笔记")) => {
         const path = await create();
         promptRenameNote(path, path.split("/").pop() ?? fallback);
     }, [promptRenameNote]);
-    const createAndPromptNotebook = useCallback(async (create: () => Promise<string>, fallback = "新建笔记本") => {
+    const createAndPromptNotebook = useCallback(async (create: () => Promise<string>, fallback = t("新建笔记本")) => {
         const path = await create();
         promptRenameNotebook(path, path.split("/").pop() ?? fallback);
     }, [promptRenameNotebook]);
@@ -532,12 +533,12 @@ export function Sidebar() {
             return [
                 {
                     id: "rename",
-                    label: "重命名",
+                    label: t("重命名"),
                     onSelect: () => beginRenameNote(note),
                 },
                 {
                     id: "icon",
-                    label: "更改图标…",
+                    label: t("更改图标…"),
                     onSelect: () => setIconPicker({
                         kind: "note",
                         path: note.id,
@@ -546,7 +547,7 @@ export function Sidebar() {
                 },
                 {
                     id: "move",
-                    label: "移动笔记…",
+                    label: t("移动笔记…"),
                     onSelect: () => setMoveNotePath(note.id),
                 },
                 {
@@ -557,7 +558,7 @@ export function Sidebar() {
                 { id: "sep", label: "", separator: true },
                 {
                     id: "delete",
-                    label: "删除笔记",
+                    label: t("删除笔记"),
                     danger: true,
                     onSelect: () => setConfirm({
                         kind: "delete-note",
@@ -571,14 +572,14 @@ export function Sidebar() {
         const items: ContextMenuItem[] = [
             {
                 id: "create-note",
-                label: "新建笔记",
+                label: t("新建笔记"),
                 onSelect: () => void createAndPromptNote(() => createNoteInNotebook(nb.id)),
             },
         ];
         if (nb.parentPath == null) {
             items.push({
                 id: "create-child",
-                label: "新建文件夹",
+                label: t("新建文件夹"),
                 onSelect: () => void createAndPromptNotebook(() => createChildNotebook(nb.id)),
             });
         }
@@ -591,21 +592,21 @@ export function Sidebar() {
             currentIndex < (container?.siblings.length ?? 0) - 1;
         items.push({ id: "sep-1", label: "", separator: true }, {
             id: "rename",
-            label: "重命名",
+            label: t("重命名"),
             onSelect: () => beginRenameNotebook(nb),
         }, {
             id: "move-up",
-            label: "上移",
+            label: t("上移"),
             disabled: !canMoveUp,
             onSelect: () => void moveNotebook(nb.id, -1),
         }, {
             id: "move-down",
-            label: "下移",
+            label: t("下移"),
             disabled: !canMoveDown,
             onSelect: () => void moveNotebook(nb.id, 1),
         }, {
             id: "icon",
-            label: "更改图标…",
+            label: t("更改图标…"),
             onSelect: () => setIconPicker({
                 kind: "notebook",
                 path: nb.id,
@@ -617,7 +618,7 @@ export function Sidebar() {
             onSelect: () => void revealPath(nb.id),
         }, { id: "sep-2", label: "", separator: true }, {
             id: "delete",
-            label: "删除笔记本",
+            label: t("删除笔记本"),
             danger: true,
             onSelect: () => setConfirm({
                 kind: "delete-notebook",
@@ -670,38 +671,37 @@ export function Sidebar() {
             }}>
       <div className="mn-sidebar__traffic" data-tauri-drag-region onMouseDown={handleWindowDragMouseDown}>
         <WindowTrafficLights className="mn-sidebar__traffic-lights"/>
-        <button type="button" className="mn-icon-btn mn-sidebar__traffic-btn" onClick={toggleSidebar} title={collapsed ? "展开侧边栏" : "收起侧边栏"}>
+        <button type="button" className="mn-icon-btn mn-sidebar__traffic-btn" onClick={toggleSidebar} title={collapsed ? t("展开侧边栏") : t("收起侧边栏")}>
           <Icon name={collapsed ? "sidebar-right" : "sidebar-left"} size={17}/>
         </button>
       </div>
       <hr className="mn-sidebar__traffic-rule"/>
       <div className="mn-sidebar__titlebar">
-        {collapsed ? (<button type="button" className="mn-icon-btn mn-sidebar__rail-btn" onClick={() => void createAndPromptNote(() => createQuickNote())} title="新建笔记">
+        {collapsed ? (<button type="button" className="mn-icon-btn mn-sidebar__rail-btn" onClick={() => void createAndPromptNote(() => createQuickNote())} title={t("新建笔记")}>
             <Icon name="pencil-square" size={16}/>
           </button>) : (<div className="mn-sidebar__brand-col">
-            <button type="button" className="mn-sidebar__logo" onClick={() => void select("workspaceHome")} title="回到工作台">
+            <button type="button" className="mn-sidebar__logo" onClick={() => void select("workspaceHome")} title={t("回到工作台")}>
               <img className="mn-sidebar__mark" src={brand.logo} alt=""/>
               <span title={brand.name}>{brand.name}</span>
             </button>
             <button type="button" className="mn-new-note" onClick={() => void createAndPromptNote(() => createQuickNote())}>
               <Icon name="pencil-square" size={12}/>
-              新建笔记
-            </button>
+              {t("新建笔记")}</button>
           </div>)}
       </div>
 
       <div className="mn-sidebar__scroll">
-        {!collapsed ? <SidebarSection title="笔记"/> : null}
+        {!collapsed ? <SidebarSection title={t("笔记")}/> : null}
         <div className={collapsed ? "mn-sidebar__icon-stack" : undefined}>
-          <SidebarRow title={collapsed ? "" : "笔记"} icon={<Icon name="home" size={13}/>} selected={selected === "workspaceHome"} onClick={() => void select("workspaceHome")}/>
+          <SidebarRow title={collapsed ? "" : t("笔记")} icon={<Icon name="home" size={13}/>} selected={selected === "workspaceHome"} onClick={() => void select("workspaceHome")}/>
           
           
         </div>
 
         {!collapsed ? (<>
             <div className="mn-sidebar-section-row">
-              <span>文档结构</span>
-              <button type="button" className="mn-icon-btn" title="新建笔记本" onClick={() => void createAndPromptNotebook(() => createRootNotebook())}>
+              <span>{t("文档结构")}</span>
+              <button type="button" className="mn-icon-btn" title={t("新建笔记本")} onClick={() => void createAndPromptNotebook(() => createRootNotebook())}>
                 <Icon name="plus" size={11}/>
               </button>
             </div>
@@ -710,15 +710,15 @@ export function Sidebar() {
       </div>
 
       <div className={`mn-sidebar__footer ${collapsed ? "is-collapsed" : ""}`}>
-        <SidebarRow title={collapsed ? "" : "回收站"} icon={<Icon name="trash" size={13}/>} selected={selected === "trash"} badge={collapsed ? null : trashCount} onClick={() => void select("trash")}/>
-        <SidebarRow title={collapsed ? "" : "设置"} icon={<Icon name="cog-6-tooth" size={13}/>} selected={selected === "settings"} onClick={() => void select("settings")}/>
+        <SidebarRow title={collapsed ? "" : t("回收站")} icon={<Icon name="trash" size={13}/>} selected={selected === "trash"} badge={collapsed ? null : trashCount} onClick={() => void select("trash")}/>
+        <SidebarRow title={collapsed ? "" : t("设置")} icon={<Icon name="cog-6-tooth" size={13}/>} selected={selected === "settings"} onClick={() => void select("settings")}/>
       </div>
 
-      {!collapsed ? (<div className="mn-sidebar__resizer" role="separator" aria-orientation="vertical" aria-valuemin={SIDEBAR_WIDTH_MIN} aria-valuemax={SIDEBAR_WIDTH_MAX} aria-valuenow={sidebarWidth} aria-label="调整侧栏宽度" onPointerDown={onResizePointerDown}/>) : null}
+      {!collapsed ? (<div className="mn-sidebar__resizer" role="separator" aria-orientation="vertical" aria-valuemin={SIDEBAR_WIDTH_MIN} aria-valuemax={SIDEBAR_WIDTH_MAX} aria-valuenow={sidebarWidth} aria-label={t("调整侧栏宽度")} onPointerDown={onResizePointerDown}/>) : null}
 
       {menu ? (<ContextMenu x={menu.x} y={menu.y} items={menuItems(menu.target)} onClose={() => setMenu(null)}/>) : null}
 
-      {prompt ? (<TextPromptDialog title={prompt.kind === "rename-note" ? "重命名笔记" : "重命名笔记本"} label={prompt.kind === "rename-note" ? "标题" : "名称"} initialValue={prompt.value} onCancel={() => setPrompt(null)} onConfirm={(value) => {
+      {prompt ? (<TextPromptDialog title={prompt.kind === "rename-note" ? t("重命名笔记") : t("重命名笔记本")} label={prompt.kind === "rename-note" ? t("标题") : t("名称")} initialValue={prompt.value} onCancel={() => setPrompt(null)} onConfirm={(value) => {
                 const next = prompt;
                 setPrompt(null);
                 if (next.kind === "rename-note")
@@ -727,9 +727,9 @@ export function Sidebar() {
                     void renameNotebook(next.path, value);
             }}/>) : null}
 
-      {confirm ? (<ConfirmDialog title={confirm.kind === "delete-note" ? "删除笔记" : "删除笔记本"} message={confirm.kind === "delete-note"
-                ? `确定将「${confirm.title}」移到回收站？`
-                : `确定将笔记本「${confirm.title}」及其全部内容移到回收站？`} confirmLabel="移到回收站" danger onCancel={() => setConfirm(null)} onConfirm={() => {
+      {confirm ? (<ConfirmDialog title={confirm.kind === "delete-note" ? t("删除笔记") : t("删除笔记本")} message={confirm.kind === "delete-note"
+                ? t("确定将「{0}」移到回收站？", confirm.title)
+                : t("确定将笔记本「{0}」及其全部内容移到回收站？", confirm.title)} confirmLabel={t("移到回收站")} danger onCancel={() => setConfirm(null)} onConfirm={() => {
                 const next = confirm;
                 setConfirm(null);
                 if (next.kind === "delete-note")
@@ -738,13 +738,13 @@ export function Sidebar() {
                     void deleteNotebook(next.path);
             }}/>) : null}
 
-      {moveNotePath ? (<MoveTargetDialog title="移动笔记" notebooks={notebooks} onCancel={() => setMoveNotePath(null)} onConfirm={(target) => {
+      {moveNotePath ? (<MoveTargetDialog title={t("移动笔记")} notebooks={notebooks} onCancel={() => setMoveNotePath(null)} onConfirm={(target) => {
                 const path = moveNotePath;
                 setMoveNotePath(null);
                 void moveNote(path, target);
             }}/>) : null}
 
-      {iconPicker ? (<IconPickerDialog kind={iconPicker.kind} title={iconPicker.kind === "note" ? "更改笔记图标" : "更改笔记本图标"} current={iconPicker.current} onCancel={() => setIconPicker(null)} onPick={({ icon }) => {
+      {iconPicker ? (<IconPickerDialog kind={iconPicker.kind} title={iconPicker.kind === "note" ? t("更改笔记图标") : t("更改笔记本图标")} current={iconPicker.current} onCancel={() => setIconPicker(null)} onPick={({ icon }) => {
                 const next = iconPicker;
                 setIconPicker(null);
                 if (next.kind === "note") {

@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 /**
  * MeteorNote library icons — original colorful SVG artwork.
  * Licensed under MIT (same as this project). Free for commercial use.
@@ -55,49 +56,49 @@ function folderSvg(front: string, tab: string, back: string) {
 export const LIBRARY_ICONS: LibraryIconDef[] = [
   {
     id: "folder",
-    label: "文件夹",
+    get label() { return t("文件夹"); },
     group: "folder",
     svg: folderSvg("currentColor", "currentColor", "currentColor"),
   },
   {
     id: "folder-blue",
-    label: "蓝文件夹",
+    get label() { return t("蓝文件夹"); },
     group: "folder",
     svg: folderSvg("#5B9DFF", "#3B82F6", "#2563EB"),
   },
   {
     id: "folder-green",
-    label: "绿文件夹",
+    get label() { return t("绿文件夹"); },
     group: "folder",
     svg: folderSvg("#4ADE80", "#22C55E", "#16A34A"),
   },
   {
     id: "folder-orange",
-    label: "橙文件夹",
+    get label() { return t("橙文件夹"); },
     group: "folder",
     svg: folderSvg("#FB923C", "#F97316", "#EA580C"),
   },
   {
     id: "folder-purple",
-    label: "紫文件夹",
+    get label() { return t("紫文件夹"); },
     group: "folder",
     svg: folderSvg("#C084FC", "#A855F7", "#9333EA"),
   },
   {
     id: "folder-pink",
-    label: "粉文件夹",
+    get label() { return t("粉文件夹"); },
     group: "folder",
     svg: folderSvg("#F9A8D4", "#EC4899", "#DB2777"),
   },
   {
     id: "folder-teal",
-    label: "青文件夹",
+    get label() { return t("青文件夹"); },
     group: "folder",
     svg: folderSvg("#5EEAD4", "#14B8A6", "#0D9488"),
   },
   {
     id: "document",
-    label: "文档",
+    get label() { return t("文档"); },
     group: "note",
     svg: svg(`
       <path d="M6 3.5h8.2L18.5 8v12.5A1.5 1.5 0 0 1 17 22H6a1.5 1.5 0 0 1-1.5-1.5v-17A1.5 1.5 0 0 1 6 3.5Z" fill="#EEF2FF"/>
@@ -108,7 +109,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "book",
-    label: "书本",
+    get label() { return t("书本"); },
     group: "note",
     svg: svg(`
       <path d="M4.5 5.2c0-.94.76-1.7 1.7-1.7H12v16.5H6.2A1.7 1.7 0 0 1 4.5 18.3V5.2Z" fill="#60A5FA"/>
@@ -119,7 +120,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "notebook",
-    label: "笔记本",
+    get label() { return t("笔记本"); },
     group: "note",
     svg: svg(`
       <rect x="5" y="3.5" width="14" height="17" rx="2" fill="#FDE68A"/>
@@ -129,7 +130,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "memo",
-    label: "便笺",
+    get label() { return t("便笺"); },
     group: "note",
     svg: svg(`
       <path d="M5.5 4h13a1.5 1.5 0 0 1 1.5 1.5V16l-4 4H5.5A1.5 1.5 0 0 1 4 18.5v-13A1.5 1.5 0 0 1 5.5 4Z" fill="#FEF3C7"/>
@@ -139,7 +140,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "star",
-    label: "星星",
+    get label() { return t("星星"); },
     group: "mark",
     svg: svg(`
       <path d="M12 3.2 14.6 9l6.2.5-4.7 4 1.5 6L12 16.6 6.4 19.5l1.5-6-4.7-4L9.4 9 12 3.2Z" fill="#FBBF24" stroke="#F59E0B" stroke-width="0.8" stroke-linejoin="round"/>
@@ -147,7 +148,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "heart",
-    label: "爱心",
+    get label() { return t("爱心"); },
     group: "mark",
     svg: svg(`
       <path d="M12 20s-7.2-4.4-9.1-8.2C1.4 9 2.6 6.2 5.3 5.4c1.8-.5 3.5.2 4.5 1.5C10.8 5.6 12.5 4.9 14.3 5.4c2.7.8 3.9 3.6 2.4 6.4C19.2 15.6 12 20 12 20Z" fill="#FB7185" stroke="#E11D48" stroke-width="0.7"/>
@@ -155,7 +156,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "lightbulb",
-    label: "灵感",
+    get label() { return t("灵感"); },
     group: "mark",
     svg: svg(`
       <path d="M12 3.2a6 6 0 0 1 3.6 10.8c-.5.35-.8.9-.8 1.5v.7H9.2v-.7c0-.6-.3-1.15-.8-1.5A6 6 0 0 1 12 3.2Z" fill="#FDE047"/>
@@ -165,7 +166,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "rocket",
-    label: "火箭",
+    get label() { return t("火箭"); },
     group: "mark",
     svg: svg(`
       <path d="M12 3c3.5 2 5.5 5.8 5.2 10.2-.1 1.5-1.2 2.8-2.6 3.3l-2.6.9-2.6-.9c-1.4-.5-2.5-1.8-2.6-3.3C6.5 8.8 8.5 5 12 3Z" fill="#A78BFA"/>
@@ -176,7 +177,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "leaf",
-    label: "叶子",
+    get label() { return t("叶子"); },
     group: "mark",
     svg: svg(`
       <path d="M18.8 5.2c-5.4-.8-10.8 2-12.6 7.4-1.2 3.5.2 6.6 2.8 8 3.5-4.6 8.2-7.8 13.4-9.2-.4-2.4-1.6-4.6-3.6-6.2Z" fill="#4ADE80"/>
@@ -185,7 +186,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "flame",
-    label: "火焰",
+    get label() { return t("火焰"); },
     group: "mark",
     svg: svg(`
       <path d="M12 3.5s2.2 2.8 2.2 5.2c0 1.4-.7 2.4-1.7 3.1 2.4-.2 4.5-2 4.5-5 2.8 2.6 4 5.6 4 8.2 0 4.1-3.4 7-9 7s-9-2.9-9-7c0-4.4 3.8-7.8 9-11.5Z" fill="#FB923C"/>
@@ -194,7 +195,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "music",
-    label: "音乐",
+    get label() { return t("音乐"); },
     group: "mark",
     svg: svg(`
       <path d="M9 17.5V7.2l10-2.2v10.2" stroke="#8B5CF6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -204,7 +205,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "camera",
-    label: "相机",
+    get label() { return t("相机"); },
     group: "mark",
     svg: svg(`
       <rect x="3.5" y="7" width="17" height="12.5" rx="2.5" fill="#64748B"/>
@@ -215,7 +216,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "code",
-    label: "代码",
+    get label() { return t("代码"); },
     group: "mark",
     svg: svg(`
       <rect x="3.5" y="4.5" width="17" height="15" rx="2.2" fill="#1E293B"/>
@@ -224,7 +225,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "brain",
-    label: "思维",
+    get label() { return t("思维"); },
     group: "mark",
     svg: svg(`
       <path d="M12 4.2c2.2 0 3.6 1.1 4.2 2.2 1.3.2 2.8 1.3 2.8 3.4 0 1.1-.5 2-1.2 2.6.7.5 1.2 1.4 1.2 2.5 0 1.8-1.3 3-2.8 3.2-.4 1.4-1.8 2.5-4.2 2.5s-3.8-1.1-4.2-2.5c-1.5-.2-2.8-1.4-2.8-3.2 0-1.1.5-2 1.2-2.5-.7-.6-1.2-1.5-1.2-2.6 0-2.1 1.5-3.2 2.8-3.4C8.4 5.3 9.8 4.2 12 4.2Z" fill="#F0ABFC"/>
@@ -233,7 +234,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "sparkles",
-    label: "闪光",
+    get label() { return t("闪光"); },
     group: "mark",
     svg: svg(`
       <path d="M12 3.5 13.4 8.2 18 9.5l-4.6 1.4L12 15.5l-1.4-4.6L6 9.5l4.6-1.3L12 3.5Z" fill="#FBBF24"/>
@@ -243,7 +244,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "bookmark",
-    label: "书签",
+    get label() { return t("书签"); },
     group: "mark",
     svg: svg(`
       <path d="M7 3.8h10a1.2 1.2 0 0 1 1.2 1.2v15l-6.2-3.4L5.8 20V5A1.2 1.2 0 0 1 7 3.8Z" fill="#F87171"/>
@@ -252,7 +253,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "pin",
-    label: "图钉",
+    get label() { return t("图钉"); },
     group: "mark",
     svg: svg(`
       <path d="M14.8 4.2 19.8 9.2 13 12.5 11.5 11 8.2 14.3 9.7 15.8 6.2 20l-.8-.8 4.2-3.5L8.1 14.2 9.6 12.7 6.3 6 11.3 4.2Z" fill="#F87171"/>
@@ -261,7 +262,7 @@ export const LIBRARY_ICONS: LibraryIconDef[] = [
   },
   {
     id: "coffee",
-    label: "咖啡",
+    get label() { return t("咖啡"); },
     group: "mark",
     svg: svg(`
       <path d="M6 9.5h10.5v6.2A3.3 3.3 0 0 1 13.2 19H9.3A3.3 3.3 0 0 1 6 15.7V9.5Z" fill="#F5D0A9"/>

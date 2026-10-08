@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { useRef } from "react";
 import { LIBRARY_ICONS } from "@/lib/libraryIcons";
 import { LibraryIcon } from "@/components/LibraryIcon";
@@ -44,20 +45,17 @@ export function IconPickerDialog({
           <div>
             <h3>{title}</h3>
             <p className="mn-icon-picker__sub">
-              选择一个内置图标，或上传自定义图片作为图标。
-            </p>
+              {t("选择一个内置图标，或上传自定义图片作为图标。")}</p>
           </div>
           <button type="button" className="mn-toolbar-btn" onClick={onCancel}>
-            取消
-          </button>
+            {t("取消")}</button>
         </header>
 
         <section className="mn-icon-picker__section">
           <div className="mn-icon-picker__section-head">
-            <h4>图标</h4>
+            <h4>{t("图标")}</h4>
             <button type="button" className="mn-toolbar-btn" onClick={upload}>
-              上传图标
-            </button>
+              {t("上传图标")}</button>
           </div>
           <input
             ref={inputRef}
@@ -79,7 +77,7 @@ export function IconPickerDialog({
                   fallback="document"
                 />
             </div>
-            <p className="mn-muted">上传图片会替换当前图标。</p>
+            <p className="mn-muted">{t("上传图片会替换当前图标。")}</p>
           </div>
           <div className="mn-icon-picker__grid mn-icon-picker__grid--wide">
             {ICON_IDS.map((icon) => {
@@ -101,7 +99,7 @@ export function IconPickerDialog({
         </section>
 
         <p className="mn-icon-picker__license">
-          图标为 MeteorNote 原创彩色 SVG，MIT 协议，可商用。详见{" "}
+          {t("图标为 MeteorNote 原创彩色 SVG，MIT 协议，可商用。详见")}{" "}
           <code>src/assets/library-icons/LICENSE.md</code>
         </p>
       </div>
@@ -113,7 +111,7 @@ async function fileToDataUrl(file: File): Promise<string> {
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(reader.error ?? new Error("无法读取图标文件"));
+    reader.onerror = () => reject(reader.error ?? new Error(t("无法读取图标文件")));
     reader.readAsDataURL(file);
   });
 }

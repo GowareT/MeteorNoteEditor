@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { open } from "@tauri-apps/plugin-dialog";
 
 export const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"];
@@ -19,14 +20,14 @@ export function isSupportedImageFile(name: string, mime = "") {
 
 export async function pickLocalImage(): Promise<string | null> {
   const selected = await open({
-    title: "选择图片",
+    get title() { return t("选择图片"); },
     multiple: false,
     directory: false,
-    filters: [{ name: "图片", extensions: [...IMAGE_EXTENSIONS] }],
+    filters: [{ get name() { return t("图片"); }, extensions: [...IMAGE_EXTENSIONS] }],
   });
   if (!selected) return null;
   if (typeof selected !== "string" || !isSupportedImageFile(selected)) {
-    throw new Error(IMAGE_FORMAT_ERROR);
+    throw new Error(t(IMAGE_FORMAT_ERROR));
   }
   return selected;
 }

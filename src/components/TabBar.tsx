@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { ContextMenu, type ContextMenuItem } from "@/components/ContextMenu";
@@ -8,6 +9,7 @@ import { handleWindowDragMouseDown } from "@/lib/windowDrag";
 import {
   pageKey,
   useAppStore,
+  titleForPage,
   type BrowserTab,
   type SplitPane,
 } from "@/store/appStore";
@@ -186,32 +188,32 @@ export function TabBar({ pane }: { pane?: SplitPane }) {
     return [
       {
         id: "close",
-        label: "关闭",
+        label: t("关闭"),
         disabled: !!tab.isPinned || allTabs.length <= 1,
         onSelect: () => void closeTab(tab.id),
       },
       {
         id: "close-others",
-        label: "关闭其他标签",
+        label: t("关闭其他标签"),
         disabled: !hasOtherCloseable,
         onSelect: () => void closeOtherTabs(tab.id),
       },
       {
         id: "close-all",
-        label: "全部关闭",
+        label: t("全部关闭"),
         disabled: !hasCloseable,
         onSelect: () => void closeAllTabs(),
       },
       { id: "sep-1", label: "", separator: true },
       {
         id: "split-h",
-        label: "左右分屏",
+        label: t("左右分屏"),
         disabled: !canSplit,
         onSelect: () => beginTabSplit(tab.id, "horizontal"),
       },
       {
         id: "split-v",
-        label: "上下分屏",
+        label: t("上下分屏"),
         disabled: !canSplit,
         onSelect: () => beginTabSplit(tab.id, "vertical"),
       },
@@ -219,7 +221,7 @@ export function TabBar({ pane }: { pane?: SplitPane }) {
         ? [
             {
               id: "end-split",
-              label: "退出分屏",
+              label: t("退出分屏"),
               onSelect: () => endTabSplit(),
             } satisfies ContextMenuItem,
           ]
@@ -227,24 +229,24 @@ export function TabBar({ pane }: { pane?: SplitPane }) {
       { id: "sep-split", label: "", separator: true },
       {
         id: "pin",
-        label: tab.isPinned ? "取消固定" : "固定",
+        label: tab.isPinned ? t("取消固定") : t("固定"),
         onSelect: () => toggleTabPin(tab.id),
       },
       {
         id: "reload",
-        label: "重新加载",
+        label: t("重新加载"),
         onSelect: () => void reloadTab(tab.id),
       },
       {
         id: "fav",
-        label: fav ? "取消收藏" : "收藏",
+        label: fav ? t("取消收藏") : t("收藏"),
         onSelect: () => toggleFavorite(tab.page),
       },
       { id: "sep-2", label: "", separator: true },
       {
         id: "new-window",
-        label: "在新窗口打开",
-        onSelect: () => void openPageInNewWindow(tab.page, tab.title),
+        label: t("在新窗口打开"),
+        onSelect: () => void openPageInNewWindow(tab.page, typeof tab.page === "string" ? titleForPage(tab.page) : tab.title),
       },
     ];
   };
@@ -263,7 +265,7 @@ export function TabBar({ pane }: { pane?: SplitPane }) {
           <button
             type="button"
             className="mn-tabbar__scroll-btn"
-            title="向左滚动"
+            title={t("向左滚动")}
             disabled={!scrollState.canLeft}
             data-no-window-drag
             onClick={() => scrollTabs(-1)}
@@ -315,12 +317,12 @@ export function TabBar({ pane }: { pane?: SplitPane }) {
                 <span className="mn-tab__icon" aria-hidden>
                   {iconForPage(tab.page, notebooks, 13)}
                 </span>
-                <span className="mn-tab__title">{tab.title}</span>
+                <span className="mn-tab__title">{typeof tab.page === "string" ? titleForPage(tab.page) : tab.title}</span>
                 {!tab.isPinned && allTabs.length > 1 ? (
                   <button
                     type="button"
                     className="mn-tab__close"
-                    title="关闭"
+                    title={t("关闭")}
                     onClick={(e) => {
                       e.stopPropagation();
                       void closeTab(tab.id);
@@ -338,7 +340,7 @@ export function TabBar({ pane }: { pane?: SplitPane }) {
           <button
             type="button"
             className="mn-tabbar__scroll-btn"
-            title="向右滚动"
+            title={t("向右滚动")}
             disabled={!scrollState.canRight}
             data-no-window-drag
             onClick={() => scrollTabs(1)}

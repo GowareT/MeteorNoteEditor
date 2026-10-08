@@ -9,8 +9,8 @@ let options;
 let calls = [];
 let failure;
 globalThis.__transferPicker = async value => { options = value; return selection; };
-globalThis.__transferRun = async (operation, paths) => {
-  calls.push({ operation, paths });
+globalThis.__transferRun = async (operation, paths, targetNotebookPath) => {
+  calls.push({ operation, paths, ...(targetNotebookPath ? {targetNotebookPath} : {}) });
   if (failure) throw failure;
   return { path: paths[0], noteCount: 1 };
 };
@@ -32,18 +32,24 @@ const result = await build({
 });
 const { chooseLibraryTransfer: run } = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString("base64")}`);
 for (const kind of ["files", "folder", "export", "export-note", "pdf", "backup", "restore"]) {
-  assert.equal(await run(kind, "Book/Note"), null);
+  assert.equal(await run(kind, "Book/Note", "Book/Child"), null);
 }
 assert.equal(calls.length, 0);
 selection = ["/tmp/first.md", "/tmp/second.markdown"];
-await run("files");
+await run("files", undefined, "Book/Child");
 assert.equal(options.multiple, true);
 assert.deepEqual(options.filters[0].extensions, ["md", "markdown"]);
-assert.deepEqual(calls.pop(), { operation: "import", paths: selection });
+assert.ok(options.title.includes("Book/Child"));
+assert.deepEqual(calls.pop(), { operation: "import", paths: selection, targetNotebookPath: "Book/Child" });
 selection = "/tmp/folder";
-await run("folder");
+await run("folder", undefined, "Another Book");
 assert.equal(options.directory, true);
-assert.deepEqual(calls.pop(), { operation: "import", paths: [selection] });
+assert.deepEqual(calls.pop(), { operation: "import", paths: [selection], targetNotebookPath: "Another Book" });
+options = undefined;
+await assert.rejects(() => run("files"), /请先打开/);
+await assert.rejects(() => run("folder"), /请先打开/);
+assert.equal(options, undefined, "Import without a notebook must not open a picker");
+assert.equal(calls.length, 0);
 await run("export-note", "Book/Note");
 assert.ok(options.defaultPath.startsWith("Note-"));
 assert.deepEqual(calls.pop(), { operation: "export-note", paths: [selection, "Book/Note"] });
@@ -67,10 +73,13 @@ failure = new Error("保存失败");
 await assert.rejects(() => run("export"), /保存失败/);
 const view = await readFile("src/views/NoteEditorView.tsx", "utf8");
 const more = view.slice(view.indexOf("const moreItems ="), view.indexOf("const outlineMenuItems ="));
-assert.ok(!more.includes('label: "插入"'));
-for (const id of ["import-files", "import-folder", "export-note", "export-pdf", "export-all"]) assert.ok(more.includes(`id: "${id}"`));
-assert.ok(view.slice(view.indexOf("const editorMenuItems ="), view.indexOf("const moreItems =")).includes('label: "插入"'));
-console.log("Passed: more-menu entries, import/export dispatch, current-note scope, picker cancellation, restore confirmation and save errors.");
+assert.ok(!more.includes('label: t("插入")'));
+for (const id of ["export-note", "export-pdf", "export-all"]) assert.ok(more.includes(`id: "${id}"`));
+assert.ok(!more.includes('id: "import"'));
+const notebookView = await readFile("src/views/NotebookView.tsx", "utf8");
+for (const id of ["import-files", "import-folder"]) assert.ok(notebookView.includes(`id: "${id}"`));
+assert.ok(view.slice(view.indexOf("const editorMenuItems ="), view.indexOf("const moreItems =")).includes('label: t("插入")'));
+console.log("Passed: notebook import destinations, required target, more-menu exports, current-note scope, picker cancellation, restore confirmation and save errors.");
 Object.defineProperty(globalThis, "navigator", { value: { platform: "Win32" }, configurable: true });
 options = undefined;
 await assert.rejects(() => run("pdf", "Book/Note"), /仅支持 macOS/);

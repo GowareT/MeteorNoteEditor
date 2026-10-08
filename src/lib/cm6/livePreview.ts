@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { syntaxTree } from "@codemirror/language";
 import { EditorSelection, StateField, EditorState } from "@codemirror/state";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -383,7 +384,7 @@ function parseCalloutHead(text: string, lineFrom: number) {
     markerFrom: lineFrom,
     markerTo: lineFrom + marker.length,
     bodyFrom,
-    hideTo: body.trim() === "提示" ? lineFrom + text.length : bodyFrom,
+    hideTo: body.trim() === t("提示") ? lineFrom + text.length : bodyFrom,
   };
 }
 
@@ -592,7 +593,7 @@ class TableWidget extends WidgetType {
       const button = document.createElement("button");
       button.type = "button";
       button.className = `cm-lp-table-add cm-lp-table-add--${kind}`;
-      const label = kind === "row" ? "在下方新增一行" : "在右侧新增一列";
+      const label = kind === "row" ? t("在下方新增一行") : t("在右侧新增一列");
       button.setAttribute("aria-label", label);
       button.title = label;
       button.addEventListener("mousedown", (event) => {
@@ -795,7 +796,7 @@ class TableWidget extends WidgetType {
       trigger.type = "button";
       trigger.className = "cm-lp-table-cell-trigger";
       trigger.textContent = "⋯";
-      trigger.setAttribute("aria-label", "单元格操作");
+      trigger.setAttribute("aria-label", t("单元格操作"));
       trigger.addEventListener("mousedown", (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -834,11 +835,11 @@ class TableWidget extends WidgetType {
         const style = readCellMeta(meta, row, col);
         const width = style?.colSpan ?? 1;
         const height = style?.rowSpan ?? 1;
-        addAction("向右合并", () => mergeCellRight(row, col), col + width >= model.header.length);
-        addAction("向下合并", () => mergeCellDown(row, col), row + height >= model.rows.length + 1);
-        addAction("取消合并", () => splitCell(row, col), !style?.colSpan && !style?.rowSpan);
-        addAction("删除行", () => deleteRow(row), row === 0 || model.rows.length <= 1);
-        addAction("删除列", () => deleteCol(col), model.header.length <= 1);
+        addAction(t("向右合并"), () => mergeCellRight(row, col), col + width >= model.header.length);
+        addAction(t("向下合并"), () => mergeCellDown(row, col), row + height >= model.rows.length + 1);
+        addAction(t("取消合并"), () => splitCell(row, col), !style?.colSpan && !style?.rowSpan);
+        addAction(t("删除行"), () => deleteRow(row), row === 0 || model.rows.length <= 1);
+        addAction(t("删除列"), () => deleteCol(col), model.header.length <= 1);
         cellEl.appendChild(panel);
       });
       cellEl.appendChild(trigger);
@@ -1180,7 +1181,7 @@ class TaskCheckboxWidget extends WidgetType {
     el.type = "button";
     el.className = `cm-lp-taskbox${this.checked ? " is-checked" : ""}`;
     el.disabled = view.state.readOnly;
-    el.setAttribute("aria-label", this.checked ? "标记为未完成" : "标记为完成");
+    el.setAttribute("aria-label", this.checked ? t("标记为未完成") : t("标记为完成"));
     el.setAttribute("aria-pressed", String(this.checked));
     el.setAttribute("contenteditable", "false");
     el.addEventListener("mousedown", (event) => {
@@ -1245,7 +1246,7 @@ class InlineImageWidget extends WidgetType {
 
     const img = document.createElement("img");
     img.className = "cm-lp-image";
-    img.alt = parsed.label || "图片";
+    img.alt = parsed.label || t("图片");
     img.draggable = false;
     const frame = document.createElement("span");
     frame.className = "mn-image-frame";
@@ -1254,7 +1255,7 @@ class InlineImageWidget extends WidgetType {
     const error = document.createElement("span");
     error.className = "mn-image-error";
     error.hidden = true;
-    error.textContent = "图片无法加载，请检查附件或图片地址";
+    error.textContent = t("图片无法加载，请检查附件或图片地址");
     img.onload = () => {
       error.hidden = true;
       if (!parsed.width) wrap.style.width = `${Math.min(img.naturalWidth, view.contentDOM.clientWidth)}px`;
@@ -1272,9 +1273,9 @@ class InlineImageWidget extends WidgetType {
     };
     const actions = document.createElement("span");
     actions.className = "mn-image-actions";
-    const crop = mediaIconButton(Crop, "裁剪图片");
+    const crop = mediaIconButton(Crop, t("裁剪图片"));
     crop.onclick = () => openImageCropDialog(this.src, parsed.crop, (next) => save({ ...parsed, crop: next }));
-    const reset = mediaIconButton(Maximize2, "恢复原图");
+    const reset = mediaIconButton(Maximize2, t("恢复原图"));
     reset.onclick = () => save({ ...parsed, crop: null, width: null });
     actions.append(crop, reset);
     const dimensions = document.createElement("span");
@@ -1389,14 +1390,14 @@ class CodeLanguageWidget extends WidgetType {
     const select = document.createElement("select");
     select.className = "cm-lp-code-language";
     select.disabled = view.state.readOnly;
-    select.setAttribute("aria-label", "代码语言");
-    select.title = "代码语言";
+    select.setAttribute("aria-label", t("代码语言"));
+    select.title = t("代码语言");
     select.setAttribute("contenteditable", "false");
     const description = resolveCodeLanguage(this.language);
     const current = CODE_LANGUAGE_OPTIONS.find(([value]) => value === this.language ||
       (description && resolveCodeLanguage(value) === description))?.[0] ?? this.language;
     for (const [value, label] of CODE_LANGUAGE_OPTIONS) {
-      select.add(new Option(label, value));
+      select.add(new Option(t(label), value));
     }
     if (current && !CODE_LANGUAGE_OPTIONS.some(([value]) => value === current)) {
       select.add(new Option(description?.name || current, current));
@@ -1431,8 +1432,8 @@ class CodeCopyWidget extends WidgetType {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "cm-lp-code-copy";
-    button.title = "复制代码";
-    button.setAttribute("aria-label", "复制代码");
+    button.title = t("复制代码");
+    button.setAttribute("aria-label", t("复制代码"));
     button.setAttribute("contenteditable", "false");
     const setLabel = (label: string, showIcon = true) => {
       button.replaceChildren();
@@ -1446,7 +1447,7 @@ class CodeCopyWidget extends WidgetType {
       text.textContent = label;
       button.appendChild(text);
     };
-    setLabel("复制");
+    setLabel(t("复制"));
     button.addEventListener("mousedown", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -1456,14 +1457,14 @@ class CodeCopyWidget extends WidgetType {
       event.stopPropagation();
       try {
         await navigator.clipboard.writeText(this.code);
-        setLabel("已复制", false);
+        setLabel(t("已复制"), false);
         window.setTimeout(() => {
-          setLabel("复制");
+          setLabel(t("复制"));
         }, 1200);
       } catch {
-        setLabel("复制失败", false);
+        setLabel(t("复制失败"), false);
         window.setTimeout(() => {
-          setLabel("复制");
+          setLabel(t("复制"));
         }, 1200);
       }
     });
@@ -1488,7 +1489,7 @@ class CodeExitWidget extends WidgetType {
     const el = document.createElement("div");
     el.className = "cm-lp-code-exit";
     el.setAttribute("contenteditable", "false");
-    el.title = "点击在代码块后继续输入";
+    el.title = t("点击在代码块后继续输入");
     el.addEventListener("mousedown", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -1541,10 +1542,11 @@ class CalloutHeadWidget extends WidgetType {
     const el = document.createElement("button");
     el.type = "button";
     el.className = "cm-lp-callout-head-widget";
+    el.disabled = view.state.readOnly;
     el.setAttribute("contenteditable", "false");
     el.setAttribute("aria-haspopup", "dialog");
-    el.setAttribute("aria-label", "选择高亮块图标");
-    el.title = "选择高亮块图标";
+    el.setAttribute("aria-label", t("选择高亮块图标"));
+    el.title = t("选择高亮块图标");
 
     const icon = document.createElement("span");
     icon.className = "cm-lp-callout-head-widget__icon";
@@ -1567,11 +1569,11 @@ class CalloutHeadWidget extends WidgetType {
       const panel = document.createElement("div");
       panel.className = "cm-lp-callout-icon-popover";
       panel.setAttribute("role", "dialog");
-      panel.setAttribute("aria-label", "选择高亮块图标");
+      panel.setAttribute("aria-label", t("选择高亮块图标"));
 
       const heading = document.createElement("div");
       heading.className = "cm-lp-callout-icon-popover__title";
-      heading.textContent = "选择图标";
+      heading.textContent = t("选择图标");
       panel.appendChild(heading);
 
       const grid = document.createElement("div");
@@ -2310,7 +2312,7 @@ function buildLivePreviewDecoInner(
           to,
           Decoration.replace({
             widget: new InlineImageWidget(
-              m[1]?.trim() || "图片",
+              m[1]?.trim() || t("图片"),
               resolveEditorImage(m[2] ?? "", notePath, libraryRootPath),
               m[2] ?? "",
               from,

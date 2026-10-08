@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { useEffect } from "react";
 import "./Dialog.css";
 
@@ -14,8 +15,8 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({
   title,
   message,
-  confirmLabel = "确定",
-  cancelLabel = "取消",
+  confirmLabel = t("确定"),
+  cancelLabel = t("取消"),
   danger = false,
   onConfirm,
   onCancel,

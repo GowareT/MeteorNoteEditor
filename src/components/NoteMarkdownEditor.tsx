@@ -1,3 +1,4 @@
+import { t, errorMessage, getLocale, editorPhrases } from "@/lib/i18n";
 import {
   forwardRef,
   useEffect,
@@ -191,16 +192,16 @@ async function fileToDataUrl(file: File) {
   return await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(reader.error ?? new Error("无法读取图片文件"));
+    reader.onerror = () => reject(reader.error ?? new Error(t("无法读取图片文件")));
     reader.readAsDataURL(file);
   });
 }
 
 async function insertDroppedImage(view: EditorView, file: File, notePath?: string | null) {
-  if (file.size > 20 * 1024 * 1024) throw new Error("图片不能超过 20MB");
+  if (file.size > 20 * 1024 * 1024) throw new Error(t("图片不能超过 20MB"));
   const tauriPath = (file as File & { path?: string }).path;
   const src = tauriPath || (await fileToDataUrl(file));
-  await insertImageSnippet(view, src, file.name || "图片", notePath);
+  await insertImageSnippet(view, src, file.name || t("图片"), notePath);
 }
 
 function isBlankBodyNote(doc: string) {
@@ -366,7 +367,7 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
       readOnly = false,
       notePath = null,
       libraryRootPath = null,
-      placeholder = "首行 # 标题；输入 / 唤起命令；光标行显示 Markdown 源码",
+      placeholder = t("首行 # 标题；输入 / 唤起命令；光标行显示 Markdown 源码"),
       titleMeta,
       onContextMenu,
       onSlashAction,
@@ -407,7 +408,7 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
       insertImage: async (src, notePath) => {
         const view = viewRef.current;
         if (!view) return;
-        await insertImageSnippet(view, src, "图片", notePath);
+        await insertImageSnippet(view, src, t("图片"), notePath);
       },
       insertCallout: (color?: string) => {
         const view = viewRef.current;
@@ -576,6 +577,7 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
       const state = EditorState.create({
         doc: valueRef.current,
         extensions: [
+          EditorState.phrases.of(getLocale() === "zh-CN" ? editorPhrases : {}),
           EditorState.readOnly.of(readOnly),
           EditorView.editable.of(!readOnly),
           EditorView.contentAttributes.of(readOnly ? { role: "document", "aria-readonly": "true" } : {}),
@@ -639,7 +641,7 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
               const href = view.state.doc.sliceString(url.from, url.to).replace(/^<|>$/g, "");
               if (!/^(https?:|mailto:)/i.test(href)) return false;
               event.preventDefault();
-              void openExternal(href).catch(error => window.alert(`无法打开链接：${String(error)}`));
+              void openExternal(href).catch(error => window.alert(t("无法打开链接：{0}", errorMessage(error))));
               return true;
             },
             mousedown(event, view) {
@@ -701,7 +703,7 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
               if (pos != null) {
                 view.dispatch({ selection: { anchor: pos } });
               }
-              void insertDroppedImage(view, file, notePath).catch((error) => window.alert(`插入图片失败：${error instanceof Error ? error.message : String(error)}`));
+              void insertDroppedImage(view, file, notePath).catch((error) => window.alert(t("插入图片失败：{0}", errorMessage(error))));
               return true;
             },
           }),
@@ -748,7 +750,7 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
               : [livePreviewExtension(notePath, libraryRootPath), mathPreviewExtension()],
           ),
           blankHintComp.current.reconfigure(
-            blankHintExtension("输入 / 插入内容"),
+            blankHintExtension(t("输入 / 插入内容")),
           ),
           titleMetaComp.current.reconfigure(
             sourceMode ? [] : titleMetaExtension(titleMeta),

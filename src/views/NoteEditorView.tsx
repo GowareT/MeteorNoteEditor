@@ -1,3 +1,4 @@
+import { getLocale, t, errorMessage } from "@/lib/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, } from "react";
 import { openImageInsertDialog } from "@/lib/editorImages";
 import { ContextMenu, type ContextMenuItem } from "@/components/ContextMenu";
@@ -55,7 +56,7 @@ function readStoredWidth(key: string, fallback: number, min = PANEL_WIDTH_MIN, m
     }
 }
 function formatStatusTime(ts: number) {
-    return new Date(ts).toLocaleTimeString("zh-CN", {
+    return new Date(ts).toLocaleTimeString(getLocale(), {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
@@ -374,7 +375,7 @@ export function NoteEditorView({ path, detached = false, }: {
                     await renameNote(path, heading);
                 }
                 catch (error) {
-                    useAppStore.setState({ error: String(error) });
+                    useAppStore.setState({ error: errorMessage(error) });
                 }
                 finally {
                     renamingRef.current = false;
@@ -432,42 +433,42 @@ export function NoteEditorView({ path, detached = false, }: {
     const insertMenuItems = useMemo((): ContextMenuItem[] => [
         {
             id: "ins-link",
-            label: "链接",
+            label: t("链接"),
             onSelect: () => runInsertCommand("link"),
         },
         {
             id: "ins-image",
-            label: "图片…",
+            label: t("图片…"),
             onSelect: () => runInsertCommand("image"),
         },
         {
             id: "ins-callout",
-            label: "高亮块",
+            label: t("高亮块"),
             onSelect: () => runInsertCommand("callout"),
         },
         {
             id: "ins-code",
-            label: "代码块",
+            label: t("代码块"),
             onSelect: () => runInsertCommand("code"),
         },
         {
             id: "ins-table",
-            label: "表格",
+            label: t("表格"),
             onSelect: () => runInsertCommand("table"),
         },
         {
             id: "ins-quote",
-            label: "引用",
+            label: t("引用"),
             onSelect: () => runInsertCommand("quote"),
         },
         {
             id: "ins-hr",
-            label: "分割线",
+            label: t("分割线"),
             onSelect: () => runInsertCommand("hr"),
         },
         {
             id: "ins-math",
-            label: "行内公式",
+            label: t("行内公式"),
             onSelect: () => runInsertCommand("math"),
         },
     ], [runInsertCommand]);
@@ -478,42 +479,42 @@ export function NoteEditorView({ path, detached = false, }: {
         const items: ContextMenuItem[] = [];
         items.push({ id: "sep-insert", label: "", separator: true }, {
             id: "insert",
-            label: "插入",
+            label: t("插入"),
             submenu: insertMenuItems,
         }, { id: "sep-note", label: "", separator: true }, {
             id: "outline",
-            label: "标题大纲",
+            label: t("标题大纲"),
             checked: outlineOpen,
             onSelect: () => toggleOutlineOpen(),
         }, {
             id: "reading",
-            label: "阅读模式",
+            label: t("阅读模式"),
             checked: viewMode === "reading",
             onSelect: () => setViewMode((m) => (m === "reading" ? "live" : "reading")),
         }, {
             id: "source",
-            label: "源码模式",
+            label: t("源码模式"),
             checked: viewMode === "source",
             onSelect: () => setViewMode((m) => (m === "source" ? "live" : "source")),
         }, { id: "sep-hist-2", label: "", separator: true }, {
             id: "history",
-            label: "历史版本",
+            label: t("历史版本"),
             checked: historyOpen,
             onSelect: () => setHistoryOpen((open) => !open),
         });
         items.push({
             id: "cut",
-            label: "剪切",
+            label: t("剪切"),
             disabled: !hasSelection,
             onSelect: () => void runEditorCommand("cut"),
         }, {
             id: "copy",
-            label: "复制",
+            label: t("复制"),
             disabled: !hasSelection,
             onSelect: () => void runEditorCommand("copy"),
         }, {
             id: "paste",
-            label: "粘贴",
+            label: t("粘贴"),
             onSelect: () => void runEditorCommand("paste"),
         });
         return items;
@@ -530,48 +531,39 @@ export function NoteEditorView({ path, detached = false, }: {
     const moreItems = useMemo((): ContextMenuItem[] => {
         return [
             {
-                id: "import",
-                label: "导入",
-                disabled: transfer.busy,
-                submenu: [
-                    { id: "import-files", label: "Markdown 文件…", onSelect: () => void transfer.run("files") },
-                    { id: "import-folder", label: "文件夹…", onSelect: () => void transfer.run("folder") },
-                ],
-            },
-            {
                 id: "export",
-                label: "导出",
+                label: t("导出"),
                 disabled: transfer.busy,
                 submenu: [
-                    { id: "export-note", label: "当前笔记（含图片）…", onSelect: () => void transfer.run("export-note") },
-                    { id: "export-pdf", label: supportsNativePdf() ? "当前笔记 PDF…" : "当前笔记 PDF（仅 macOS）", disabled: !supportsNativePdf(), onSelect: () => void transfer.run("pdf") },
-                    { id: "export-all", label: "全部 Markdown（含图片）…", onSelect: () => void transfer.run("export") },
+                    { id: "export-note", label: t("当前笔记（Markdown）…"), description: t("保存正文和图片到文件夹，可继续编辑"), onSelect: () => void transfer.run("export-note") },
+                    { id: "export-pdf", label: t("当前笔记（PDF）…"), description: supportsNativePdf() ? t("保存排版后的文档，适合分享和打印") : t("保存排版后的文档，仅 macOS 支持"), disabled: !supportsNativePdf(), onSelect: () => void transfer.run("pdf") },
+                    { id: "export-all", label: t("全部笔记（Markdown）…"), description: t("导出所有笔记本，保留目录和图片"), onSelect: () => void transfer.run("export") },
                 ],
             },
             { id: "sep-transfer", label: "", separator: true },
             {
                 id: "outline",
-                label: "标题大纲",
+                label: t("标题大纲"),
                 checked: outlineOpen,
                 onSelect: () => toggleOutlineOpen(),
             },
             { id: "sep-outline", label: "", separator: true },
             {
                 id: "reading",
-                label: "阅读模式",
+                label: t("阅读模式"),
                 checked: viewMode === "reading",
                 onSelect: () => setViewMode((m) => (m === "reading" ? "live" : "reading")),
             },
             {
                 id: "source",
-                label: "源码模式",
+                label: t("源码模式"),
                 checked: viewMode === "source",
                 onSelect: () => setViewMode((m) => (m === "source" ? "live" : "source")),
             },
             { id: "sep-hist", label: "", separator: true },
             {
                 id: "history",
-                label: "历史版本",
+                label: t("历史版本"),
                 checked: historyOpen,
                 onSelect: () => setHistoryOpen((open) => !open),
             },
@@ -589,30 +581,30 @@ export function NoteEditorView({ path, detached = false, }: {
     const outlineMenuItems = useMemo((): ContextMenuItem[] => [
         {
             id: "close-outline",
-            label: "关闭标题大纲",
+            label: t("关闭标题大纲"),
             onSelect: () => setOutlineOpen(false),
         },
     ], []);
     const showReading = viewMode === "reading";
     const moreActive = viewMode !== "live";
     const titleMeta = useMemo(() => ({
-        timeLabel: `最近修改 ${formatStatusTime(lastSavedAt)}`,
+        timeLabel: t("最近修改 {0}", formatStatusTime(lastSavedAt)),
     }), [lastSavedAt]);
     const saveLabel = saveStatus === "saving"
-        ? "保存中"
+        ? t("保存中")
         : saveStatus === "dirty"
-            ? "有未保存更改"
+            ? t("有未保存更改")
             : saveStatus === "error"
-                ? "保存失败"
-                : "本地已保存";
+                ? t("保存失败")
+                : t("本地已保存");
     const chromeActions = (<>
       
-      <button type="button" className={`mn-title-toggle ${outlineOpen ? "is-active" : ""}`} title={outlineOpen ? "收起标题大纲" : "标题大纲"} onClick={toggleOutlineOpen}>
+      <button type="button" className={`mn-title-toggle ${outlineOpen ? "is-active" : ""}`} title={outlineOpen ? t("收起标题大纲") : t("标题大纲")} onClick={toggleOutlineOpen}>
         <Icon name="queue-list" size={14}/>
       </button>
       
       
-      <button type="button" className={`mn-title-toggle ${moreActive ? "is-active" : ""}`} title="更多" onClick={(e) => {
+      <button type="button" className={`mn-title-toggle ${moreActive ? "is-active" : ""}`} title={t("更多")} onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             setEditorMenu(null);
             setMoreMenu({ x: rect.right - 8, y: rect.bottom + 4 });
@@ -645,55 +637,54 @@ export function NoteEditorView({ path, detached = false, }: {
             }}/>)}
           {transfer.busy || transfer.message || transfer.error ? (
             <div className="mn-note-transfer" role={transfer.error ? "alert" : "status"}>
-              {transfer.error || (transfer.busy ? "处理中…" : transfer.message)}
+              {transfer.error || (transfer.busy ? t("处理中…") : transfer.message)}
             </div>
           ) : null}
           <div className="mn-note__body">
-            {outlineOpen ? (<aside className={`mn-note__outline${outlinePanel.resizing ? " is-resizing" : ""}`} style={{ width: outlinePanel.width }} aria-label="标题大纲" onContextMenu={(e) => {
+            {outlineOpen ? (<aside className={`mn-note__outline${outlinePanel.resizing ? " is-resizing" : ""}`} style={{ width: outlinePanel.width }} aria-label={t("标题大纲")} onContextMenu={(e) => {
                 e.preventDefault();
                 setEditorMenu(null);
                 setMoreMenu(null);
                 setOutlineMenu({ x: e.clientX, y: e.clientY });
             }}>
                 <div className="mn-note__outline-head">
-                  <span>标题</span>
+                  <span>{t("标题")}</span>
                   <div className="mn-note__outline-actions">
                     <span className="mn-note__outline-count">
                       {outlineHeadings.length}
                     </span>
-                    <button type="button" className="mn-note__outline-close" title="关闭标题大纲" aria-label="关闭标题大纲" onClick={() => setOutlineOpen(false)}>
+                    <button type="button" className="mn-note__outline-close" title={t("关闭标题大纲")} aria-label={t("关闭标题大纲")} onClick={() => setOutlineOpen(false)}>
                       <Icon name="x-mark" size={12}/>
                     </button>
                   </div>
                 </div>
                 {outlineHeadings.length === 0 ? (<p className="mn-note__outline-empty">
-                    正文中还没有 Markdown 标题（# / ## …）
-                  </p>) : (<ul className="mn-note__outline-list">
+                    {t("正文中还没有 Markdown 标题（# / ## …）")}</p>) : (<ul className="mn-note__outline-list">
                     {visibleOutlineHeadings.map((h) => {
                     const hasKids = outlineHasChildren.get(h.id) === true;
                     const collapsed = outlineCollapsed.has(h.id);
                     return (<li key={h.id} className={`mn-note__outline-item is-h${h.level}`} style={{ paddingLeft: 8 + (h.level - 1) * 12 }}>
-                          {hasKids ? (<button type="button" className={`mn-note__outline-caret${collapsed ? "" : " is-open"}`} title={collapsed ? "展开" : "折叠"} aria-label={collapsed ? "展开" : "折叠"} onClick={() => toggleOutlineBranch(h.id)}>
+                          {hasKids ? (<button type="button" className={`mn-note__outline-caret${collapsed ? "" : " is-open"}`} title={collapsed ? t("展开") : t("折叠")} aria-label={collapsed ? t("展开") : t("折叠")} onClick={() => toggleOutlineBranch(h.id)}>
                               <Icon name="chevron-right" size={12}/>
                             </button>) : (<span className="mn-note__outline-caret-spacer"/>)}
                           <button type="button" className="mn-note__outline-link" title={h.text} onClick={() => jumpToOutlineHeading(h)}>
-                            {h.text || "（空标题）"}
+                            {h.text || t("（空标题）")}
                           </button>
                         </li>);
                 })}
                   </ul>)}
-                <div className="mn-note__outline-resizer" role="separator" aria-orientation="vertical" aria-valuemin={OUTLINE_WIDTH_MIN} aria-valuemax={OUTLINE_WIDTH_MAX} aria-valuenow={outlinePanel.width} aria-label="调整标题大纲宽度" onPointerDown={outlinePanel.onResizePointerDown}/>
+                <div className="mn-note__outline-resizer" role="separator" aria-orientation="vertical" aria-valuemin={OUTLINE_WIDTH_MIN} aria-valuemax={OUTLINE_WIDTH_MAX} aria-valuenow={outlinePanel.width} aria-label={t("调整标题大纲宽度")} onPointerDown={outlinePanel.onResizePointerDown}/>
               </aside>) : null}
             <div className="mn-note__content">
-              {<NoteMarkdownEditor key={showReading ? "reading" : "editing"} readOnly={showReading} ref={editorRef} value={draft} onChange={setDraft} fontSize={bodyFontSize} sourceMode={viewMode === "source"} notePath={path} libraryRootPath={libraryRootPath} titleMeta={titleMeta} placeholder="输入 / 插入内容" onContextMenu={onEditorContextMenu} onSlashAction={(action) => {
+              {<NoteMarkdownEditor key={showReading ? "reading" : "editing"} readOnly={showReading} ref={editorRef} value={draft} onChange={setDraft} fontSize={bodyFontSize} sourceMode={viewMode === "source"} notePath={path} libraryRootPath={libraryRootPath} titleMeta={titleMeta} placeholder={t("输入 / 插入内容")} onContextMenu={onEditorContextMenu} onSlashAction={(action) => {
                 if (action === "image") {
                     window.setTimeout(() => runInsertCommand("image"), 0);
                 }
             }}/>}
             </div>
-            {historyOpen ? (<NoteHistoryPanel notePath={path} open={historyOpen} onClose={() => setHistoryOpen(false)} onRestore={(content) => {
+            {historyOpen ? (<NoteHistoryPanel notePath={path} libraryRootPath={libraryRootPath} fontSize={bodyFontSize} open={historyOpen} onClose={() => setHistoryOpen(false)} onRestore={(content) => {
                 setDraft(content);
-                void api.documents.save(path).catch(error => useAppStore.setState({ error: String(error) }));
+                void api.documents.save(path).catch(error => useAppStore.setState({ error: errorMessage(error) }));
             }}/>) : null}
           </div>
         </section>
@@ -703,14 +694,14 @@ export function NoteEditorView({ path, detached = false, }: {
         
       </div>
 
-      <footer className="mn-note-statusbar" aria-label="文档信息">
+      <footer className="mn-note-statusbar" aria-label={t("文档信息")}>
         <div className="mn-note-statusbar__path" title={path}>
-          <span>位置</span>
+          <span>{t("位置")}</span>
           <strong>{formatDocumentPath(path)}</strong>
         </div>
         <div className="mn-note-statusbar__meta">
-          <span>当前 {formatStatusTime(clockNow)}</span>
-          <span>最近保存 {formatStatusTime(lastSavedAt)}</span>
+          <span>{t("当前：{0}", formatStatusTime(clockNow))}</span>
+          <span>{t("最近保存：{0}", formatStatusTime(lastSavedAt))}</span>
         </div>
         <div className="mn-note-statusbar__sync">
           <span className={`mn-note-statusbar__dot is-${saveStatus}`}/>

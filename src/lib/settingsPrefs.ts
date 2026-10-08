@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 /** Local-only editor preferences. */
 const PREFIX = "meteornote-editor.";
 export type AppearanceMode = "system" | "light" | "dark";
@@ -6,18 +7,18 @@ export const APPEARANCE_OPTIONS: {
     id: AppearanceMode;
     label: string;
 }[] = [
-    { id: "system", label: "跟随系统" },
-    { id: "light", label: "浅色" },
-    { id: "dark", label: "深色" },
+    { id: "system", get label() { return t("跟随系统"); } },
+    { id: "light", get label() { return t("浅色"); } },
+    { id: "dark", get label() { return t("深色"); } },
 ];
 export const EDITOR_THEME_OPTIONS: {
     id: EditorColorTheme;
     label: string;
 }[] = [
-    { id: "system", label: "默认" },
-    { id: "parchment", label: "暖色纸张" },
-    { id: "cool", label: "冷色纸张" },
-    { id: "highContrast", label: "高对比" },
+    { id: "system", get label() { return t("默认"); } },
+    { id: "parchment", get label() { return t("暖色纸张"); } },
+    { id: "cool", get label() { return t("冷色纸张"); } },
+    { id: "highContrast", get label() { return t("高对比"); } },
 ];
 function get(key: string, fallback = ""): string {
     try {

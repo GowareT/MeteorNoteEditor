@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 export function currentPlatform(): "macos" | "windows" | "other" {
   if (typeof navigator === "undefined") return "other";
   const platform = (navigator as Navigator & { userAgentData?: { platform: string } }).userAgentData?.platform ?? navigator.platform;
@@ -7,7 +8,7 @@ export function currentPlatform(): "macos" | "windows" | "other" {
 }
 
 export const supportsNativePdf = () => currentPlatform() === "macos";
-export const revealFolderLabel = () => currentPlatform() === "macos" ? "在访达中打开" : "打开文件夹";
+export const revealFolderLabel = () => currentPlatform() === "macos" ? t("在访达中打开") : t("打开文件夹");
 
 /** Convert file URLs without losing Windows drive letters or UNC server names. */
 export function fileUrlToPath(source: string): string {

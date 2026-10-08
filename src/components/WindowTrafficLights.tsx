@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import clsx from "clsx";
 import { useWindowFullscreen } from "@/hooks/useWindowFullscreen";
 import { currentPlatform } from "@/lib/platform";
@@ -38,15 +39,15 @@ export function WindowTrafficLights({ className }: WindowTrafficLightsProps) {
     <div
       className={clsx("mn-window-traffic is-custom", { "is-windows": windows }, className)}
       role="group"
-      aria-label="窗口控制"
+      aria-label={t("窗口控制")}
       data-no-window-drag
       onMouseDown={(event) => event.stopPropagation()}
     >
       <button
         type="button"
         className="mn-window-traffic__button is-close"
-        title="关闭"
-        aria-label="关闭窗口"
+        title={t("关闭")}
+        aria-label={t("关闭窗口")}
         onClick={() => void controlWindow("close")}
       >
         <span className="mn-window-traffic__glyph is-close" aria-hidden />
@@ -54,8 +55,8 @@ export function WindowTrafficLights({ className }: WindowTrafficLightsProps) {
       <button
         type="button"
         className="mn-window-traffic__button is-minimize"
-        title="最小化"
-        aria-label="最小化窗口"
+        title={t("最小化")}
+        aria-label={t("最小化窗口")}
         onClick={() => void controlWindow("minimize")}
       >
         <span className="mn-window-traffic__glyph is-minimize" aria-hidden />
@@ -63,8 +64,8 @@ export function WindowTrafficLights({ className }: WindowTrafficLightsProps) {
       <button
         type="button"
         className="mn-window-traffic__button is-restore"
-        title="退出全屏"
-        aria-label="退出全屏"
+        title={t("退出全屏")}
+        aria-label={t("退出全屏")}
         onClick={() => void controlWindow("restore")}
       >
         <span className="mn-window-traffic__glyph is-restore" aria-hidden>

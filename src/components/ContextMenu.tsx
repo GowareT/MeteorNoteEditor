@@ -4,6 +4,7 @@ import "./ContextMenu.css";
 export interface ContextMenuItem {
   id: string;
   label: string;
+  description?: string;
   disabled?: boolean;
   danger?: boolean;
   checked?: boolean;
@@ -93,7 +94,7 @@ export function ContextMenu({ x, y, anchorLeft, items, onClose }: ContextMenuPro
     <>
       <div
         ref={ref}
-        className="mn-context-menu"
+        className={`mn-context-menu${items.some(item => item.description) ? " has-descriptions" : ""}`}
         style={{ left: x, top: y }}
         role="menu"
         data-no-window-drag
@@ -136,7 +137,10 @@ export function ContextMenu({ x, y, anchorLeft, items, onClose }: ContextMenuPro
               <span className="mn-context-menu__check" aria-hidden>
                 {item.checked ? "✓" : ""}
               </span>
-              <span className="mn-context-menu__label">{item.label}</span>
+              <span className="mn-context-menu__label">
+                <span>{item.label}</span>
+                {item.description ? <span className="mn-context-menu__description">{item.description}</span> : null}
+              </span>
               {item.submenu?.length ? (
                 <span className="mn-context-menu__arrow" aria-hidden>
                   ›

@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { fileUrlToPath } from "../platform";
 import { EditorSelection, type EditorState, type TransactionSpec } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
@@ -982,11 +983,11 @@ async function resolveEmbeddedImageSrc(
 export async function insertImageSnippet(
   view: EditorView,
   src: string,
-  alt = "图片",
+  alt = t("图片"),
   notePath?: string | null,
 ) {
   const { from, to, text } = selectedText(view.state);
-  const label = (text || alt || "图片").replace(/[\[\]\r\n|]/g, " ").trim() || "图片";
+  const label = (text || alt || t("图片")).replace(/[\[\]\r\n|]/g, " ").trim() || t("图片");
   const resolved = await resolveEmbeddedImageSrc(notePath, src);
   const prefix = from > view.state.doc.lineAt(from).from ? "\n" : "";
   const suffix = to < view.state.doc.lineAt(to).to ? "\n" : "";
@@ -1003,7 +1004,7 @@ function insertCalloutSnippet(view: EditorView, color = "#fff6d6") {
   const from = view.state.doc.line(start).from;
   const to = view.state.doc.line(end).to;
   const lines = view.state.doc.sliceString(from, to).split("\n").map(blockText);
-  const body = lines.some((line) => line.trim()) ? lines.join("\n") : "在这里输入内容";
+  const body = lines.some((line) => line.trim()) ? lines.join("\n") : t("在这里输入内容");
   const safeColor = /^#[0-9a-f]{3,8}$/i.test(color) ? color : "#fff6d6";
   const insert = `> [!note:${safeColor}:lightbulb] ${body.replace(/\n/g, "\n> ")}`;
   const bodyStart = from + insert.indexOf("] ") + 2;
@@ -1033,7 +1034,7 @@ function insertSnippet(
   let cursor = 0;
   switch (kind) {
     case "link": {
-      const label = text || "链接文字";
+      const label = text || t("链接文字");
       insert = `[${label}](https://)`;
       cursor = from + label.length + 3;
       break;
@@ -1041,7 +1042,7 @@ function insertSnippet(
     case "image":
     case "image-local":
     case "image-url":
-      insert = `![${text || "图片"}]()`;
+      insert = `![${text || t("图片")}]()`;
       cursor = from + insert.length - 1;
       break;
     case "callout":
@@ -1052,7 +1053,7 @@ function insertSnippet(
       cursor = text ? from + insert.length : from + 4;
       break;
     case "table":
-      insert = "| 列1 | 列2 |\n| --- | --- |\n|  |  |";
+      insert = t("| 列1 | 列2 |\n| --- | --- |\n|  |  |");
       cursor = from + insert.indexOf("\n|  |") + 4;
       break;
     case "hr":

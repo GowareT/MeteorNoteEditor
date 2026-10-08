@@ -1,3 +1,4 @@
+import { t, errorMessage } from "@/lib/i18n";
 import { convertFileSrc, isTauri } from "@tauri-apps/api/core";
 import { getCachedLibraryRootPath } from "./api";
 import { resolveLocalImagePath } from "./platform";
@@ -19,11 +20,11 @@ export function parseImageSettings(alt: string): ImageSettings {
     alt = alt.slice(0, cropMatch.index);
   }
   const size = /\|(\d{1,5})(?:px)?$/.exec(alt);
-  return { label: (size ? alt.slice(0, size.index) : alt) || "图片", width: size ? Math.max(40, Number(size[1])) : null, crop };
+  return { label: (size ? alt.slice(0, size.index) : alt) || t("图片"), width: size ? Math.max(40, Number(size[1])) : null, crop };
 }
 
 export function imageAlt(settings: ImageSettings) {
-  const label = settings.label.replace(/[\[\]\r\n|]/g, " ").trim() || "图片";
+  const label = settings.label.replace(/[\[\]\r\n|]/g, " ").trim() || t("图片");
   const crop = settings.crop;
   return label + (settings.width ? `|${Math.round(settings.width)}` : "") +
     (crop ? `|crop=${[crop.x, crop.y, crop.w, crop.h].map((n) => Number(n.toFixed(5))).join(",")}` : "");
@@ -68,7 +69,7 @@ function mediaDialog(title: string) {
   const header = document.createElement("header");
   const heading = document.createElement("h3");
   heading.textContent = title;
-  const close = mediaIconButton(X, "关闭");
+  const close = mediaIconButton(X, t("关闭"));
   close.onclick = () => dialog.close();
   header.append(heading, close);
   dialog.append(header);
@@ -83,18 +84,18 @@ function mediaDialog(title: string) {
 }
 
 export function openImageInsertDialog(insert: (src: string) => Promise<void>) {
-  const dialog = mediaDialog("插入图片");
+  const dialog = mediaDialog(t("插入图片"));
   const local = document.createElement("button");
   local.type = "button";
   local.className = "mn-media-local";
   local.innerHTML = renderToStaticMarkup(createElement(ImagePlus, { size: 24, "aria-hidden": true }));
-  local.append(document.createTextNode("选择本地图片"));
+  local.append(document.createTextNode(t("选择本地图片")));
   const file = document.createElement("input");
   file.type = "file";
   file.accept = IMAGE_FILE_ACCEPT;
   file.hidden = true;
   const label = document.createElement("label");
-  label.textContent = "图片地址";
+  label.textContent = t("图片地址");
   const url = document.createElement("input");
   url.type = "url";
   url.placeholder = "https://";
@@ -104,16 +105,16 @@ export function openImageInsertDialog(insert: (src: string) => Promise<void>) {
   error.setAttribute("role", "alert");
   const actions = document.createElement("footer");
   const cancel = document.createElement("button");
-  cancel.textContent = "取消";
+  cancel.textContent = t("取消");
   cancel.onclick = () => dialog.close();
   const confirm = document.createElement("button");
-  confirm.textContent = "插入";
+  confirm.textContent = t("插入");
   confirm.className = "is-primary";
   const submit = async (src: string) => {
     confirm.disabled = local.disabled = true;
     error.textContent = "";
     try { await insert(src); dialog.close(); }
-    catch (e) { error.textContent = e instanceof Error ? e.message : String(e); }
+    catch (e) { error.textContent = errorMessage(e); }
     finally { confirm.disabled = local.disabled = false; }
   };
   local.onclick = async () => {
@@ -124,13 +125,13 @@ export function openImageInsertDialog(insert: (src: string) => Promise<void>) {
       const selected = await pickLocalImage();
       if (selected && dialog.isConnected) await submit(selected);
     } catch (e) {
-      error.textContent = e instanceof Error ? e.message : String(e);
+      error.textContent = errorMessage(e);
     } finally {
       confirm.disabled = local.disabled = false;
     }
   };
   confirm.onclick = () => {
-    if (!/^https?:\/\//i.test(url.value.trim())) { error.textContent = "请输入有效的 http 或 https 图片地址"; return; }
+    if (!/^https?:\/\//i.test(url.value.trim())) { error.textContent = t("请输入有效的 http 或 https 图片地址"); return; }
     void submit(url.value.trim());
   };
   url.addEventListener("keydown", (event) => { if (event.key === "Enter") confirm.click(); });
@@ -138,11 +139,11 @@ export function openImageInsertDialog(insert: (src: string) => Promise<void>) {
     const selected = file.files?.[0];
     file.value = "";
     if (!selected) return;
-    if (!isSupportedImageFile(selected.name, selected.type)) { error.textContent = IMAGE_FORMAT_ERROR; return; }
-    if (selected.size > 20 * 1024 * 1024) { error.textContent = "图片不能超过 20 MB"; return; }
+    if (!isSupportedImageFile(selected.name, selected.type)) { error.textContent = t(IMAGE_FORMAT_ERROR); return; }
+    if (selected.size > 20 * 1024 * 1024) { error.textContent = t("图片不能超过 20 MB"); return; }
     const reader = new FileReader();
     reader.onload = () => void submit(String(reader.result));
-    reader.onerror = () => { error.textContent = "无法读取图片，请重新选择"; };
+    reader.onerror = () => { error.textContent = t("无法读取图片，请重新选择"); };
     reader.readAsDataURL(selected);
   };
   actions.append(cancel, confirm);
@@ -150,13 +151,13 @@ export function openImageInsertDialog(insert: (src: string) => Promise<void>) {
 }
 
 export function openImageCropDialog(src: string, initial: ImageCrop | null, onSave: (crop: ImageCrop | null) => void) {
-  const dialog = mediaDialog("裁剪图片");
+  const dialog = mediaDialog(t("裁剪图片"));
   dialog.classList.add("is-crop");
   const stage = document.createElement("div");
   stage.className = "mn-media-crop-stage";
   const img = document.createElement("img");
   img.draggable = false;
-  img.alt = "裁剪预览";
+  img.alt = t("裁剪预览");
   const box = document.createElement("div");
   box.className = "mn-media-crop-box";
   let crop = initial ? { ...initial } : { x: 0, y: 0, w: 1, h: 1 };
@@ -208,8 +209,8 @@ export function openImageCropDialog(src: string, initial: ImageCrop | null, onSa
   };
   const footer = document.createElement("footer");
   const ratio = document.createElement("select");
-  ratio.setAttribute("aria-label", "裁剪比例");
-  for (const [value, text] of [["free", "自由裁剪"], ["1", "1:1"], ["1.7777778", "16:9"], ["1.3333333", "4:3"]]) {
+  ratio.setAttribute("aria-label", t("裁剪比例"));
+  for (const [value, text] of [["free", t("自由裁剪")], ["1", "1:1"], ["1.7777778", "16:9"], ["1.3333333", "4:3"]]) {
     const option = document.createElement("option"); option.value = value; option.textContent = text; ratio.append(option);
   }
   ratio.onchange = () => {
@@ -218,12 +219,12 @@ export function openImageCropDialog(src: string, initial: ImageCrop | null, onSa
     const w = Math.min(1, normalizedRatio), h = Math.min(1, 1 / normalizedRatio);
     crop = { x: (1 - w) / 2, y: (1 - h) / 2, w, h }; paint();
   };
-  const reset = document.createElement("button"); reset.textContent = "重置";
+  const reset = document.createElement("button"); reset.textContent = t("重置");
   reset.onclick = () => { crop = { x: 0, y: 0, w: 1, h: 1 }; ratio.value = "free"; paint(); };
-  const cancel = document.createElement("button"); cancel.textContent = "取消"; cancel.onclick = () => dialog.close();
-  const save = document.createElement("button"); save.textContent = "应用裁剪"; save.className = "is-primary";
+  const cancel = document.createElement("button"); cancel.textContent = t("取消"); cancel.onclick = () => dialog.close();
+  const save = document.createElement("button"); save.textContent = t("应用裁剪"); save.className = "is-primary";
   save.disabled = true;
-  img.onerror = () => { const error = document.createElement("p"); error.textContent = "图片加载失败，无法裁剪"; stage.replaceWith(error); };
+  img.onerror = () => { const error = document.createElement("p"); error.textContent = t("图片加载失败，无法裁剪"); stage.replaceWith(error); };
   save.onclick = () => { onSave(crop.w === 1 && crop.h === 1 ? null : crop); dialog.close(); };
   footer.append(ratio, reset, cancel, save);
   stage.append(img, box); dialog.append(stage, footer); paint();

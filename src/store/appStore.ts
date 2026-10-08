@@ -1,3 +1,4 @@
+import { t, errorMessage } from "@/lib/i18n";
 import { create } from "zustand";
 import type { LibraryNotebook, LibraryNote, SidebarPage } from "@/types/library";
 import * as api from "@/lib/api";
@@ -74,9 +75,9 @@ export function pageKey(page: SidebarPage): string {
 }
 
 export function titleForPage(page: SidebarPage): string {
-  if (page === "workspaceHome") return "笔记";
-  if (page === "trash") return "回收站";
-  if (page === "settings") return "设置";
+  if (page === "workspaceHome") return t("笔记");
+  if (page === "trash") return t("回收站");
+  if (page === "settings") return t("设置");
   if (typeof page === "object" && "note" in page) {
     return page.note.split("/").pop() ?? page.note;
   }
@@ -275,14 +276,14 @@ function firstNotebook(notebooks: LibraryNotebook[]): string | null {
 
 const homeTab: BrowserTab = {
   id: "tab-home",
-  title: "笔记",
+  title: t("笔记"),
   page: "workspaceHome",
 };
 
 async function flushBeforeNavigation(set: StoreSet): Promise<boolean> {
   try { await api.flushDrafts(); return true; }
   catch (error) {
-    set({ error: `保存失败，已保留当前编辑：${String(error)}` });
+    set({ error: t("保存失败，已保留当前编辑：{0}", errorMessage(error)) });
     return false;
   }
 }
@@ -391,7 +392,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (e) {
       set({
         loading: false,
-        error: e instanceof Error ? e.message : String(e),
+        error: errorMessage(e),
       });
     }
   },
@@ -457,7 +458,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       } catch (e) {
         set({
           loading: false,
-          error: e instanceof Error ? e.message : String(e),
+          error: errorMessage(e),
         });
       }
       return;
@@ -714,7 +715,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           set({ notePath: tab.page.note, noteDraft: body });
         }
       } catch (e) {
-        set({ error: e instanceof Error ? e.message : String(e) });
+        set({ error: errorMessage(e) });
       }
       return;
     }
@@ -739,7 +740,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await removeDeletedPages(get, set, path, "note");
       await get().refresh();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -750,7 +751,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await removeDeletedPages(get, set, path, "notebook");
       await get().refresh();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -771,7 +772,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       return newPath;
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
       throw e;
     }
   },
@@ -782,7 +783,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       remapPaths(get, set, path, newPath, "notebook");
       await get().refresh();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -791,7 +792,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await api.setNotebookIcon(path, icon);
       await get().refresh();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -800,7 +801,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await api.setNotebookColor(path, colorHex);
       await get().refresh();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -809,7 +810,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await api.setNotebookAppearance(path, icon, colorHex);
       await get().refresh();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -818,7 +819,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await api.setNoteIcon(path, icon);
       await get().refresh();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -827,7 +828,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await api.setNoteAppearance(path, icon, colorHex);
       await get().refresh();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -850,7 +851,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         await get().select({ note: newPath });
       }
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -858,10 +859,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const state = get();
       const source = findNoteLocation(state.notebooks, path);
-      if (!source) throw new Error("笔记不存在");
+      if (!source) throw new Error(t("笔记不存在"));
 
       const targetNotebook = findNotebookByPath(state.notebooks, toNotebookPath);
-      if (!targetNotebook) throw new Error("目标笔记本不存在");
+      if (!targetNotebook) throw new Error(t("目标笔记本不存在"));
 
       const sourceNotebookPath = source.notebook.id;
       let newPath = path;
@@ -912,7 +913,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       return newPath;
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
       throw e;
     }
   },
@@ -935,7 +936,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       return newPath;
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
       throw e;
     }
   },
@@ -952,14 +953,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().select({ note: path });
       return path;
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
       throw e;
     }
   },
 
   createChildNotebook: async (parentPath) => {
     try {
-      const id = await api.createNotebook("新建笔记本", parentPath);
+      const id = await api.createNotebook(t("新建笔记本"), parentPath);
       await get().refresh();
       set((s) => {
         const next = new Set(s.expandedNotebooks);
@@ -969,7 +970,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().select({ notebook: id });
       return id;
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
       throw e;
     }
   },
@@ -978,7 +979,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       await api.revealInFinder(path);
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
     }
   },
 
@@ -999,7 +1000,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     let nb = firstNotebook(notebooks);
     try {
       if (!nb) {
-        nb = await api.createNotebook("新建笔记本");
+        nb = await api.createNotebook(t("新建笔记本"));
         await get().refresh();
       }
       const path = await api.createNote(nb);
@@ -1007,19 +1008,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().select({ note: path });
       return path;
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
       throw e;
     }
   },
 
   createRootNotebook: async () => {
     try {
-      const id = await api.createNotebook("新建笔记本");
+      const id = await api.createNotebook(t("新建笔记本"));
       await get().refresh();
       await get().select({ notebook: id });
       return id;
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: errorMessage(e) });
       throw e;
     }
   },

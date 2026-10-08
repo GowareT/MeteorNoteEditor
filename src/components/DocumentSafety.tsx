@@ -1,3 +1,4 @@
+import { t, errorMessage } from "@/lib/i18n";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { isTauri, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -14,12 +15,12 @@ export function DocumentSafety() {
   const problems = [...api.documents.documents.values()].filter(doc => doc.error);
   useEffect(() => {
     let disposed = false;
-    void api.recoveredWindowDrafts().then(entries => { if (!disposed) setRecovered(entries); }).catch(error => { if (!disposed) setError(String(error)); });
+    void api.recoveredWindowDrafts().then(entries => { if (!disposed) setRecovered(entries); }).catch(error => { if (!disposed) setError(errorMessage(error)); });
     let changes = Promise.resolve();
     const pathChanges = isTauri() ? listen<api.PathChange>("mne-path-changed", event => {
       changes = changes.then(async () => {
         if (!disposed) await useAppStore.getState().applyPathChange(event.payload);
-      }).catch(error => { if (!disposed) setError(String(error)); });
+      }).catch(error => { if (!disposed) setError(errorMessage(error)); });
     }) : Promise.resolve(() => {});
     let polling = false;
     const poll = async () => {
@@ -28,7 +29,7 @@ export function DocumentSafety() {
       try {
         for (const path of api.documents.documents.keys()) await api.documents.checkExternal(path);
         await useAppStore.getState().refresh();
-      } catch (error) { setError(String(error)); }
+      } catch (error) { setError(errorMessage(error)); }
       finally { polling = false; }
     };
     const interval = window.setInterval(() => void poll(), 2500);
@@ -45,7 +46,7 @@ export function DocumentSafety() {
         await api.flushDrafts();
         await invoke("finish_close", { ...event.payload, success: true });
       } catch (error) {
-        setError(`尚未保存，窗口保持打开：${String(error)}`);
+        setError(t("尚未保存，窗口保持打开：{0}", errorMessage(error)));
         locked.current = false;
         setClosing(false);
         await invoke("finish_close", { ...event.payload, success: false });
@@ -64,29 +65,29 @@ export function DocumentSafety() {
   async function resolve(action: () => Promise<unknown>) {
     setBusy(true); setError("");
     try { await action(); await useAppStore.getState().refresh(); }
-    catch (error) { setError(String(error)); }
+    catch (error) { setError(errorMessage(error)); }
     finally { setBusy(false); }
   }
   return <>
-    {closing && <div className="mne-closing" role="status">正在保存，请稍候…</div>}
-    {(error || problems.length > 0 || recovered.length > 0) && <section className="mne-save-problems" aria-label="保存与冲突处理">
+    {closing && <div className="mne-closing" role="status">{t("正在保存，请稍候…")}</div>}
+    {(error || problems.length > 0 || recovered.length > 0) && <section className="mne-save-problems" aria-label={t("保存与冲突处理")}>
       {error && <p role="alert">{error}</p>}
       {recovered.map(entry => <div key={`${entry.storageKey}/${entry.path}`}>
-        <strong>{entry.path}</strong><p>发现上次独立窗口中未保存的草稿</p>
+        <strong>{entry.path}</strong><p>{t("发现上次独立窗口中未保存的草稿")}</p>
         <button disabled={busy} onClick={() => void resolve(async () => {
           await api.restoreWindowDraft(entry);
           setRecovered(entries => entries.filter(item => item !== entry));
-        })}>恢复为新笔记</button>
+        })}>{t("恢复为新笔记")}</button>
       </div>)}
       {problems.map(doc => <div key={doc.path}>
-        <strong>{doc.path}</strong><p role="alert">{doc.error}</p>
-        <button disabled={busy} onClick={() => void resolve(() => api.documents.save(doc.path))}>重试保存</button>
-        <button disabled={busy} onClick={() => void resolve(() => api.saveConflictCopy(doc.path))}>将草稿另存为副本</button>
+        <strong>{doc.path}</strong><p role="alert">{errorMessage(doc.error)}</p>
+        <button disabled={busy} onClick={() => void resolve(() => api.documents.save(doc.path))}>{t("重试保存")}</button>
+        <button disabled={busy} onClick={() => void resolve(() => api.saveConflictCopy(doc.path))}>{t("将草稿另存为副本")}</button>
         <button disabled={busy} onClick={() => {
-          if (confirm("放弃此未保存草稿，使用磁盘版本？")) void resolve(() => api.documents.useDisk(doc.path));
-        }}>使用磁盘版本</button>
+          if (confirm(t("放弃此未保存草稿，使用磁盘版本？"))) void resolve(() => api.documents.useDisk(doc.path));
+        }}>{t("使用磁盘版本")}</button>
       </div>)}
-      {error && <button onClick={() => setError("")}>关闭提示</button>}
+      {error && <button onClick={() => setError("")}>{t("关闭提示")}</button>}
     </section>}
   </>;
 }

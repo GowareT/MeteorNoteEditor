@@ -41,6 +41,7 @@ npm run tauri:dev
 | --- | --- |
 | `http://localhost:5183/scripts/editor-regression.html` | Markdown 格式组合、光标、表格和任务布局 |
 | `http://localhost:5183/scripts/app-smoke.html` | 使用内存模拟数据的编辑、设置、列表与回收站流程 |
+| `http://localhost:5183/scripts/notebook-import-regression.html` | 使用模拟对话框与内存数据检查目标笔记本、导入后刷新、取消与失败提示 |
 | `http://localhost:5183/scripts/branding-regression.html` | 工作区标识相关检查 |
 | `http://localhost:5183/scripts/pdf-smoke.html` | PDF 排版测试内容 |
 
@@ -88,3 +89,9 @@ macOS 产物位于 `src-tauri/target/release/bundle/macos/` 和 `src-tauri/targe
 依赖、编译产物、日志和本地配置由 `.gitignore` 排除。不要提交真实笔记、备份、密钥或证书；默认示例笔记和应用图标属于项目源码，应保留。
 
 修改依赖时同步锁文件；只修改文档时，无需重新生成第三方声明或运行完整构建。提交前检查相对链接、命令、平台说明与实际实现是否一致。
+
+### Language and history regression checks
+
+`npm test` checks translation keys and placeholders, preference persistence, cross-window language changes, English insertion snippets, and error messages that preserve user paths. UI messages use `t()` from `src/lib/i18n.ts`; add their English text to `src/lib/locales/en.ts`. Never translate note contents or filenames.
+
+Open `/scripts/history-language-regression.html` during development to check formatted read-only history, delayed responses, failed reads, exact Markdown restoration, and language switching. All fixture writes stay in memory.

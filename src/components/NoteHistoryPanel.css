@@ -123,14 +123,11 @@
 
 .mn-history__body {
   margin: 0;
-  padding: 16px 18px;
+  padding: 0;
   overflow: auto;
   flex: 1;
   min-height: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 13px;
-  line-height: 1.55;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: var(--mn-text);
 }
+
+.mn-history__body > .mn-cm-editor { height: 100%; }

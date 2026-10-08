@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import type { CSSProperties, ReactNode } from "react";
 import { resolveEditorImage, parseImageSettings, applyImageCrop } from "@/lib/editorImages";
 import {
@@ -93,7 +94,7 @@ function renderInline(
         <img
           className="mn-md-image"
           src={resolveEditorImage(m[3] ?? "", notePath, libraryRootPath)}
-          alt={img.label || "图片"}
+          alt={img.label || t("图片")}
           onLoad={(event) => {
             const element = event.currentTarget;
             if (!img.width) element.parentElement!.style.width = `${element.naturalWidth}px`;
@@ -510,7 +511,7 @@ export function SimpleMarkdown({
   }
 
   if (blocks.length === 0) {
-    return <p className="mn-muted">暂无内容</p>;
+    return <p className="mn-muted">{t("暂无内容")}</p>;
   }
   return <div className="mn-md">{blocks}</div>;
 }

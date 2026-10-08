@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import "./Dialog.css";
 
@@ -14,7 +15,7 @@ export function TextPromptDialog({
   title,
   label,
   initialValue = "",
-  confirmLabel = "保存",
+  confirmLabel = t("保存"),
   onConfirm,
   onCancel,
 }: TextPromptDialogProps) {
@@ -57,8 +58,7 @@ export function TextPromptDialog({
         />
         <div className="mn-dialog__actions">
           <button type="button" className="mn-dialog__btn" onClick={onCancel}>
-            取消
-          </button>
+            {t("取消")}</button>
           <button
             type="submit"
             className="mn-dialog__btn is-primary"

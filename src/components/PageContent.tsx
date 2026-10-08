@@ -8,5 +8,5 @@ export function PageContent({page, detachedNote = false}: {page: SidebarPage; de
   if (page === "trash") return <TrashView />;
   if (page === "settings") return <SettingsView />;
   if (typeof page === "object" && "note" in page) return <NoteEditorView key={page.note} path={page.note} detached={detachedNote} />;
-  return <NotebookView notebookPath={typeof page === "object" ? page.notebook : undefined} />;
+  return <NotebookView key={typeof page === "object" ? page.notebook : "all-notes"} notebookPath={typeof page === "object" ? page.notebook : undefined} />;
 }

@@ -1,8 +1,9 @@
+import { t, errorMessage } from "@/lib/i18n";
 import { useCallback, useRef, useState } from "react";
 import { chooseLibraryTransfer, type TransferKind } from "@/lib/libraryTransfer";
 import { useAppStore } from "@/store/appStore";
 
-export function useLibraryTransfer(notePath?: string) {
+export function useLibraryTransfer(notePath?: string, targetNotebookPath?: string) {
   const running = useRef(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -12,12 +13,14 @@ export function useLibraryTransfer(notePath?: string) {
     running.current = true;
     setBusy(true); setError(""); setMessage("");
     try {
-      const result = await chooseLibraryTransfer(kind, notePath);
+      const result = await chooseLibraryTransfer(kind, notePath, targetNotebookPath);
       if (!result) return;
       await useAppStore.getState().refresh();
-      setMessage(`已完成，${result.noteCount} 篇笔记 · ${result.path}`);
-    } catch (error) { setError(String(error)); }
+      setMessage(kind === "files" || kind === "folder"
+        ? t("已导入 {0} 篇笔记到「{1}」", result.noteCount, result.path)
+        : t("已完成，{0} 篇笔记 · {1}", result.noteCount, result.path));
+    } catch (error) { setError(errorMessage(error)); }
     finally { running.current = false; setBusy(false); }
-  }, [notePath]);
+  }, [notePath, targetNotebookPath]);
   return { busy, message, error, run };
 }

@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { currentPlatform, isValidWindowsName } from "./platform";
 /** 笔记正文首行 `# 标题` 约定（类似常规 MD 编辑器） */
 
@@ -24,7 +25,7 @@ function stripTitleInlineFormat(text: string): string {
 }
 
 function replaceTitleInlineText(text: string, title: string): string {
-  const safe = title.trim() || "未命名笔记";
+  const safe = title.trim() || t("未命名笔记");
   const trimmed = text.trim();
   const leading = text.slice(0, text.indexOf(trimmed));
   const trailing = text.slice(leading.length + trimmed.length);
@@ -63,7 +64,7 @@ export function extractLeadingTitle(md: string): string | null {
 
 /** 保证正文以 `# …` 首行标题开头；已有首行 H1 则原样保留 */
 export function ensureLeadingTitle(md: string, title: string): string {
-  const safe = title.trim() || "未命名笔记";
+  const safe = title.trim() || t("未命名笔记");
   const text = md.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
   const first = text.split("\n", 1)[0] ?? "";
   if (/^#\s+/.test(first)) {
@@ -76,7 +77,7 @@ export function ensureLeadingTitle(md: string, title: string): string {
 }
 
 export function syncLeadingTitle(md: string, title: string): string {
-  const safe = title.trim() || "未命名笔记";
+  const safe = title.trim() || t("未命名笔记");
   const text = md.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
   const first = text.split("\n", 1)[0] ?? "";
   if (/^#\s+/.test(first)) {

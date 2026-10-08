@@ -23,15 +23,20 @@ const APP_PREFS_FILE: &str = "app-prefs.json";
 struct AppPrefs {
     #[serde(default = "default_menu_bar_icon_enabled")]
     menu_bar_icon_enabled: bool,
+    #[serde(default = "default_language")]
+    language: String,
 }
 
 impl Default for AppPrefs {
     fn default() -> Self {
         Self {
             menu_bar_icon_enabled: true,
+            language: default_language(),
         }
     }
 }
+
+fn default_language() -> String { "zh-CN".into() }
 
 fn default_menu_bar_icon_enabled() -> bool {
     true
@@ -83,14 +88,15 @@ fn ensure_tray_icon(app: &AppHandle) -> LibraryResult<()> {
     let icon = Image::from_bytes(include_bytes!("../icons/icon.png"))
         .map_err(|e| LibraryError::Message(format!("无法加载托盘图标：{e}")))?;
 
+    let english = read_app_prefs().language == "en";
     let menu = MenuBuilder::new(app)
         .item(
-            &MenuItem::with_id(app, "tray-show", "显示 / 隐藏主窗口", true, None::<&str>)
+            &MenuItem::with_id(app, "tray-show", if english { "Show / Hide Main Window" } else { "显示 / 隐藏主窗口" }, true, None::<&str>)
                 .map_err(|e| LibraryError::Message(format!("无法创建托盘菜单：{e}")))?,
         )
         .separator()
         .item(
-            &MenuItem::with_id(app, "tray-quit", "退出", true, None::<&str>)
+            &MenuItem::with_id(app, "tray-quit", if english { "Quit" } else { "退出" }, true, None::<&str>)
                 .map_err(|e| LibraryError::Message(format!("无法创建托盘菜单：{e}")))?,
         )
         .build()
@@ -117,15 +123,28 @@ fn ensure_tray_icon(app: &AppHandle) -> LibraryResult<()> {
 }
 
 fn sync_menu_bar_icon_enabled(app: &AppHandle, enabled: bool) -> LibraryResult<()> {
-    let prefs = AppPrefs {
-        menu_bar_icon_enabled: enabled,
-    };
+    let mut prefs = read_app_prefs();
+    prefs.menu_bar_icon_enabled = enabled;
     write_app_prefs(&prefs)?;
     if enabled {
         ensure_tray_icon(app)?;
     } else {
         let _ = app.remove_tray_by_id(TRAY_ID);
     }
+    Ok(())
+}
+
+#[tauri::command]
+fn set_app_language(app: AppHandle, language: String) -> LibraryResult<()> {
+    let _guard = storage::lock()?;
+    if language != "zh-CN" && language != "en" {
+        return Err(LibraryError::Message("Unsupported language".into()));
+    }
+    let mut prefs = read_app_prefs();
+    prefs.language = language;
+    write_app_prefs(&prefs)?;
+    let _ = app.remove_tray_by_id(TRAY_ID);
+    if prefs.menu_bar_icon_enabled { ensure_tray_icon(&app)?; }
     Ok(())
 }
 
@@ -360,12 +379,12 @@ async fn search_notes(query: String) -> LibraryResult<Vec<transfer::SearchHit>> 
         .await.map_err(|e| LibraryError::Message(e.to_string()))?
 }
 #[tauri::command]
-async fn transfer_library(operation: String, paths: Vec<String>) -> LibraryResult<transfer::TransferResult> {
+async fn transfer_library(operation: String, paths: Vec<String>, target_notebook_path: Option<String>) -> LibraryResult<transfer::TransferResult> {
     tauri::async_runtime::spawn_blocking(move || {
         let _guard = storage::lock()?;
         let first = paths.first().ok_or_else(|| LibraryError::Message("未选择文件或目录".into()))?;
         match operation.as_str() {
-            "import" => transfer::import_markdown(paths),
+            "import" => transfer::import_markdown(paths, target_notebook_path.as_deref().ok_or_else(|| LibraryError::Message("请先打开要导入到的笔记本".into()))?),
             "export" => transfer::export_markdown(first),
             "export-note" => transfer::export_note(first, paths.get(1).ok_or_else(|| LibraryError::Message("未选择笔记".into()))?),
             "backup" => transfer::backup(first),
@@ -388,6 +407,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
+            set_app_language,
             lifecycle::finish_close,
             search_notes,
             transfer_library,
@@ -452,4 +472,20 @@ pub fn run() {
                 }
             }
         });
+}
+
+#[cfg(test)]
+mod preference_tests {
+    use super::AppPrefs;
+
+    #[test]
+    fn language_preferences_keep_legacy_defaults_and_tray_state() {
+        let mut prefs: AppPrefs = serde_json::from_str(r#"{"menuBarIconEnabled":false}"#).unwrap();
+        assert_eq!(prefs.language, "zh-CN");
+        prefs.language = "en".into();
+        let saved = serde_json::to_string(&prefs).unwrap();
+        let restored: AppPrefs = serde_json::from_str(&saved).unwrap();
+        assert_eq!(restored.language, "en");
+        assert!(!restored.menu_bar_icon_enabled);
+    }
 }

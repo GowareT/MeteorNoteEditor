@@ -795,4 +795,4 @@
 .mn-cm-editor.is-reading .cm-lp-image-toolbar,
 .mn-cm-editor.is-reading .cm-lp-image-resize { display: none !important; }
 .mn-cm-editor.is-reading select { appearance: none; opacity: 1; pointer-events: none; }
-.mn-cm-editor.is-reading button:not([aria-label="复制代码"]) { pointer-events: none; }
+.mn-cm-editor.is-reading button:not(.cm-lp-code-copy) { pointer-events: none; }

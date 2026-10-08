@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import type { LibraryNotebook } from "@/types/library";
 import "./Dialog.css";
@@ -52,7 +53,7 @@ export function MoveTargetDialog({
         <h3 className="mn-dialog__title">{title}</h3>
         <div className="mn-dialog__list">
           {options.length === 0 ? (
-            <p className="mn-dialog__empty">没有可用的目标笔记本</p>
+            <p className="mn-dialog__empty">{t("没有可用的目标笔记本")}</p>
           ) : (
             options.map((opt) => (
               <button
@@ -72,16 +73,14 @@ export function MoveTargetDialog({
         </div>
         <div className="mn-dialog__actions">
           <button type="button" className="mn-dialog__btn" onClick={onCancel}>
-            取消
-          </button>
+            {t("取消")}</button>
           <button
             type="button"
             className="mn-dialog__btn is-primary"
             disabled={!selected}
             onClick={() => selected && onConfirm(selected)}
           >
-            移动
-          </button>
+            {t("移动")}</button>
         </div>
       </div>
     </div>

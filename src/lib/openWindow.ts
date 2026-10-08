@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import type { SidebarPage } from "@/types/library";
 import { encodeBootstrap } from "@/lib/bootstrap";
 import { currentPlatform } from "./platform";
@@ -26,7 +27,7 @@ export async function openPageInNewWindow(page: SidebarPage, title: string): Pro
         });
         win.once("tauri://error", (e) => {
             console.error("open window failed", e);
-            window.alert("无法打开新窗口，请检查应用权限配置。");
+            window.alert(t("无法打开新窗口，请检查应用权限配置。"));
         });
     }
     catch {

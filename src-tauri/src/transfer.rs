@@ -210,8 +210,54 @@ pub(crate) fn import_images(body: &str, file: &Path, allowed_root: &Path, packag
     for (range, replacement) in edits { result.replace_range(range, &replacement); }
     Ok(result)
 }
-pub fn import_markdown(sources: Vec<String>) -> LibraryResult<TransferResult> {
+fn import_target(notebook: &str) -> LibraryResult<PathBuf> {
+    let target = paths::notebook_path(notebook)?;
+    if !regular(&target)?.is_dir() { return Err(invalid("目标笔记本不存在")); }
+    let root = paths::notebooks_root()?;
+    for directory in target.ancestors().take_while(|path| *path != root) {
+        let name = directory.file_name().ok_or_else(|| invalid("无效的笔记本路径"))?.to_string_lossy();
+        if directory.join(".note.json").exists() || directory.join(format!("{name}.md")).is_file() {
+            return Err(invalid("请选择笔记本，不能导入到笔记内部"));
+        }
+    }
+    Ok(target)
+}
+
+// Only publish fully prepared packages. Rollback removes newly added entries,
+// never existing notes, notebook metadata or manual ordering.
+fn publish_import(source: &Path, target: &Path, published: &mut Vec<PathBuf>) -> LibraryResult<()> {
+    let mut entries = fs::read_dir(source)?.map(|entry| entry.map(|entry| entry.path())).collect::<Result<Vec<_>, _>>()?;
+    entries.sort();
+    for entry in entries {
+        if !regular(&entry)?.is_dir() { continue; }
+        let name = entry.file_name().and_then(|name| name.to_str()).ok_or_else(|| invalid("无效文件名"))?;
+        let note = entry.join(".note.json").is_file();
+        let mut destination = target.join(name);
+        if !note && fs::symlink_metadata(&destination).is_ok() {
+            let meta = regular(&destination)?;
+            if meta.is_dir() && !destination.join(".note.json").exists() && !destination.join(format!("{name}.md")).is_file() {
+                publish_import(&entry, &destination, published)?;
+                continue;
+            }
+        }
+        let mut index = 2;
+        while fs::symlink_metadata(&destination).is_ok() {
+            destination = target.join(format!("{name} {index}"));
+            index += 1;
+        }
+        if note {
+            let new_name = destination.file_name().unwrap().to_string_lossy();
+            if new_name != name { fs::rename(entry.join(format!("{name}.md")), entry.join(format!("{new_name}.md")))?; }
+        }
+        fs::rename(&entry, &destination)?;
+        published.push(destination);
+    }
+    Ok(())
+}
+
+pub fn import_markdown(sources: Vec<String>, target_notebook: &str) -> LibraryResult<TransferResult> {
     if sources.is_empty() { return Err(invalid("未选择 Markdown 文件")); }
+    let target = import_target(target_notebook)?;
     let work = stage()?; let mut files = Vec::new();
     for source in sources {
         let path = PathBuf::from(source); regular(&path)?;
@@ -244,9 +290,12 @@ pub fn import_markdown(sources: Vec<String>) -> LibraryResult<TransferResult> {
         atomic_write(dest.join(format!("{title}.md")), body)?;
         atomic_write(dest.join(".note.json"), br#"{"icon":"document","colorHex":null}"#)?;
     }
-    let name = unique_name(&format!("导入 {}", chrono::Local::now().format("%Y%m%d-%H%M%S")))?;
-    fs::rename(notebook, paths::notebook_path(&name)?)?;
-    Ok(TransferResult { path: name, note_count: files.len() })
+    let mut published = Vec::new();
+    if let Err(error) = publish_import(&notebook, &target, &mut published) {
+        for path in published.iter().rev() { let _ = fs::remove_dir_all(path); }
+        return Err(error);
+    }
+    Ok(TransferResult { path: target_notebook.into(), note_count: files.len() })
 }
 
 fn export_notebook(source: &Path, target: &Path, size: &mut u64, count: &mut usize) -> LibraryResult<()> {
@@ -377,7 +426,8 @@ mod tests {
             atomic_write(source.join("图 (1).png"), b"png data").unwrap();
             atomic_write(source.join("章节/正文.md"), "# 正文\n\n只在正文出现的关键词\n![图片](<../图 (1).png>)\n![引用][pic]\n\n[pic]: <../图 (1).png>\n").unwrap();
             atomic_write(source.join("章节.md"), "# 同名文件夹\n").unwrap();
-            let result = import_markdown(vec![source.display().to_string()]).unwrap();
+            let target = library::create_notebook(Some("导入目标".into()), None).unwrap();
+            let result = import_markdown(vec![source.display().to_string()], &target).unwrap();
             assert_eq!(result.note_count, 2);
             let path = format!("{}/章节/正文", result.path);
             let body = library::read_note(&path).unwrap();
@@ -407,11 +457,96 @@ mod tests {
         });
     }
     #[test]
+    fn import_into_selected_child_keeps_existing_notes_and_renames_duplicates() {
+        fixture(|base, _| {
+            let parent = library::create_notebook(Some("工作".into()), None).unwrap();
+            let target = library::create_notebook(Some("资料".into()), Some(parent.clone())).unwrap();
+            let existing = library::create_note(&target, Some("记录".into())).unwrap();
+            library::write_note(&existing, "# 记录\n\n原来的内容").unwrap();
+            let directory = paths::notebook_path(&target).unwrap();
+            let order = fs::read(directory.join(".order.json")).unwrap();
+            let root_count = library::list_notebooks().unwrap().len();
+            let source = base.join("记录.md");
+            atomic_write(base.join("图.png"), b"image bytes").unwrap();
+            atomic_write(&source, "# 记录\n\n导入的内容 ![图](图.png)").unwrap();
+            for suffix in ["2", "3"] {
+                let result = import_markdown(vec![source.display().to_string()], &target).unwrap();
+                assert_eq!(result.path, target);
+                assert_eq!(result.note_count, 1);
+                let note = format!("{target}/记录 {suffix}");
+                assert!(library::read_note(&note).unwrap().contains("导入的内容 ![图](assets/"));
+                assert_eq!(fs::read_dir(paths::notebook_path(&note).unwrap().join("assets")).unwrap().count(), 1);
+            }
+            assert_eq!(library::read_note(&existing).unwrap(), "# 记录\n\n原来的内容");
+            assert_eq!(fs::read(directory.join(".order.json")).unwrap(), order);
+            assert_eq!(library::list_notebooks().unwrap().len(), root_count);
+            assert!(!paths::notebook_path(&format!("{parent}/记录")).unwrap().exists());
+        });
+    }
+    #[test]
+    fn folder_import_merges_subnotebooks_and_avoids_note_directory_collisions() {
+        fixture(|base, _| {
+            let target = library::create_notebook(Some("目标".into()), None).unwrap();
+            let child = library::create_notebook(Some("章节".into()), Some(target.clone())).unwrap();
+            let existing = library::create_note(&child, Some("保留".into())).unwrap();
+            let collision = library::create_note(&target, Some("同名目录".into())).unwrap();
+            let source = base.join("source");
+            fs::create_dir_all(source.join("章节")).unwrap();
+            fs::create_dir_all(source.join("同名目录")).unwrap();
+            atomic_write(source.join("正文.md"), "# 正文").unwrap();
+            atomic_write(source.join("章节/新文.markdown"), "# 新文").unwrap();
+            atomic_write(source.join("同名目录/子文.md"), "# 子文").unwrap();
+            let result = import_markdown(vec![source.display().to_string()], &target).unwrap();
+            assert_eq!(result.note_count, 3);
+            assert_eq!(library::read_note(&format!("{target}/正文")).unwrap(), "# 正文");
+            assert_eq!(library::read_note(&format!("{child}/新文")).unwrap(), "# 新文");
+            assert_eq!(library::read_note(&format!("{target}/同名目录 2/子文")).unwrap(), "# 子文");
+            assert_eq!(library::read_note(&existing).unwrap(), "# 保留\n");
+            assert_eq!(library::read_note(&collision).unwrap(), "# 同名目录\n");
+        });
+    }
+    #[test]
+    fn invalid_target_and_broken_import_leave_selected_notebook_unchanged() {
+        fixture(|base, _| {
+            let target = library::create_notebook(Some("目标".into()), None).unwrap();
+            let existing = library::create_note(&target, Some("原文".into())).unwrap();
+            let good = base.join("新文.md"); atomic_write(&good, "# 新文").unwrap();
+            let broken = base.join("坏文.md"); atomic_write(&broken, "![缺失](missing.png)").unwrap();
+            for invalid_target in ["".to_owned(), "../escape".into(), "不存在".into(), existing.clone(), format!("{existing}/assets")] {
+                assert!(import_markdown(vec![good.display().to_string()], &invalid_target).is_err());
+            }
+            assert!(import_markdown(vec![good.display().to_string(), broken.display().to_string()], &target).is_err());
+            assert!(!paths::notebook_path(&format!("{target}/新文")).unwrap().exists());
+            assert!(!paths::notebook_path("不存在").unwrap().exists());
+            assert_eq!(library::read_note(&existing).unwrap(), "# 原文\n");
+        });
+    }
+    #[cfg(unix)]
+    #[test]
+    fn failed_publish_rolls_back_only_new_entries() {
+        fixture(|base, _| {
+            let target = library::create_notebook(Some("目标".into()), None).unwrap();
+            let existing = library::create_note(&target, Some("保留".into())).unwrap();
+            let source = base.join("source"); fs::create_dir_all(source.join("Z")).unwrap();
+            atomic_write(source.join("A.md"), "# A").unwrap();
+            atomic_write(source.join("Z/子文.md"), "# 子文").unwrap();
+            let outside = base.join("outside"); fs::create_dir(&outside).unwrap();
+            let link = paths::notebook_path(&target).unwrap().join("Z");
+            std::os::unix::fs::symlink(&outside, &link).unwrap();
+            assert!(import_markdown(vec![source.display().to_string()], &target).is_err());
+            assert!(!paths::notebook_path(&format!("{target}/A")).unwrap().exists());
+            assert!(fs::symlink_metadata(&link).unwrap().file_type().is_symlink());
+            assert_eq!(fs::read_dir(&outside).unwrap().count(), 0);
+            assert_eq!(library::read_note(&existing).unwrap(), "# 保留\n");
+        });
+    }
+    #[test]
     fn missing_image_aborts_import_and_existing_targets_are_not_overwritten() {
         fixture(|base, _| {
             let file = base.join("broken.md"); atomic_write(&file, "![missing](missing.png)").unwrap();
             let before = library::list_notebooks().unwrap().len();
-            assert!(import_markdown(vec![file.display().to_string()]).is_err());
+            let target = library::list_notebooks().unwrap()[0].id.clone();
+            assert!(import_markdown(vec![file.display().to_string()], &target).is_err());
             assert_eq!(library::list_notebooks().unwrap().len(), before);
             assert!(backup(file.to_str().unwrap()).is_err());
             assert_eq!(fs::read_to_string(&file).unwrap(), "![missing](missing.png)");

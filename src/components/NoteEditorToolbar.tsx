@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import {
   useEffect,
   useLayoutEffect,
@@ -214,8 +215,8 @@ export function NoteEditorToolbar({
     {
       id: "insert",
       kind: "menu",
-      title: "插入",
-      label: "插入",
+      title: t("插入"),
+      label: t("插入"),
       open: insertOpen,
       setOpen: (v) => {
         setInsertOpen(v);
@@ -230,7 +231,7 @@ export function NoteEditorToolbar({
       trigger: (
         <>
           <Icon name="plus" size={13} />
-          <span className="mn-md-tb__label">插入</span>
+          <span className="mn-md-tb__label">{t("插入")}</span>
           <Icon name="chevron-down" size={10} />
         </>
       ),
@@ -238,14 +239,14 @@ export function NoteEditorToolbar({
         <div className="mn-md-tb__pop">
           {(
             [
-              ["link", "链接"],
-              ["image", "图片…"],
-              ["callout", "高亮块"],
-              ["code", "代码块"],
-              ["table", "表格"],
-              ["quote", "引用"],
-              ["hr", "分割线"],
-              ["math", "行内公式"],
+              ["link", t("链接")],
+              ["image", t("图片…")],
+              ["callout", t("高亮块")],
+              ["code", t("代码块")],
+              ["table", t("表格")],
+              ["quote", t("引用")],
+              ["hr", t("分割线")],
+              ["math", t("行内公式")],
             ] as const
           ).map(([kind, label]) => (
             <button
@@ -282,14 +283,14 @@ export function NoteEditorToolbar({
       ),
       overflowItems: (
         [
-          ["link", "插入链接"],
-          ["image", "插入图片"],
-          ["callout", "插入高亮块"],
-          ["code", "插入代码块"],
-          ["table", "插入表格"],
-          ["quote", "插入引用"],
-          ["hr", "插入分割线"],
-          ["math", "插入行内公式"],
+          ["link", t("插入链接")],
+          ["image", t("插入图片")],
+          ["callout", t("插入高亮块")],
+          ["code", t("插入代码块")],
+          ["table", t("插入表格")],
+          ["quote", t("插入引用")],
+          ["hr", t("插入分割线")],
+          ["math", t("插入行内公式")],
         ] as const
       ).map(([kind, label]) => ({
         key: `insert-${kind}`,
@@ -322,8 +323,8 @@ export function NoteEditorToolbar({
     {
       id: "bold",
       kind: "btn",
-      title: "加粗",
-      label: "加粗",
+      title: t("加粗"),
+      label: t("加粗"),
       disabled,
       active: Boolean(formatMarks.bold),
       onClick: () => run({ type: "bold" }),
@@ -332,8 +333,8 @@ export function NoteEditorToolbar({
     {
       id: "italic",
       kind: "btn",
-      title: "斜体",
-      label: "斜体",
+      title: t("斜体"),
+      label: t("斜体"),
       disabled,
       active: Boolean(formatMarks.italic),
       onClick: () => run({ type: "italic" }),
@@ -342,8 +343,8 @@ export function NoteEditorToolbar({
     {
       id: "underline",
       kind: "btn",
-      title: "下划线",
-      label: "下划线",
+      title: t("下划线"),
+      label: t("下划线"),
       disabled,
       active: Boolean(formatMarks.underline),
       onClick: () => run({ type: "underline" }),
@@ -352,8 +353,8 @@ export function NoteEditorToolbar({
     {
       id: "strike",
       kind: "btn",
-      title: "删除线",
-      label: "删除线",
+      title: t("删除线"),
+      label: t("删除线"),
       disabled,
       active: Boolean(formatMarks.strike),
       onClick: () => run({ type: "strike" }),
@@ -362,8 +363,8 @@ export function NoteEditorToolbar({
     {
       id: "highlight",
       kind: "menu",
-      title: "高亮",
-      label: "高亮",
+      title: t("高亮"),
+      label: t("高亮"),
       open: highlightOpen,
       setOpen: (v) => {
         setHighlightOpen(v);
@@ -381,7 +382,7 @@ export function NoteEditorToolbar({
           <button
             type="button"
             className="mn-md-tb__swatch mn-md-tb__swatch--text"
-            title="默认高亮"
+            title={t("默认高亮")}
             onClick={() => {
               closeMenus();
               run({ type: "highlight" });
@@ -402,7 +403,7 @@ export function NoteEditorToolbar({
               }}
             />
           ))}
-          <label className="mn-md-tb__swatch mn-md-tb__swatch--picker" title="自定义高亮颜色">
+          <label className="mn-md-tb__swatch mn-md-tb__swatch--picker" title={t("自定义高亮颜色")}>
             <input
               type="color"
               className="mn-md-tb__picker"
@@ -420,8 +421,8 @@ export function NoteEditorToolbar({
     {
       id: "color",
       kind: "menu",
-      title: "字体颜色",
-      label: "字体颜色",
+      title: t("字体颜色"),
+      label: t("字体颜色"),
       open: colorOpen,
       setOpen: (v) => {
         setColorOpen(v);
@@ -449,7 +450,7 @@ export function NoteEditorToolbar({
               }}
             />
           ))}
-          <label className="mn-md-tb__swatch mn-md-tb__swatch--picker" title="自定义字体颜色">
+          <label className="mn-md-tb__swatch mn-md-tb__swatch--picker" title={t("自定义字体颜色")}>
             <input
               type="color"
               className="mn-md-tb__picker"
@@ -467,8 +468,8 @@ export function NoteEditorToolbar({
     {
       id: "align",
       kind: "menu",
-      title: "文字位置",
-      label: "文字位置",
+      title: t("文字位置"),
+      label: t("文字位置"),
       open: alignOpen,
       setOpen: (v) => {
         setAlignOpen(v);
@@ -485,9 +486,9 @@ export function NoteEditorToolbar({
         <div className="mn-md-tb__pop">
           {(
             [
-              ["left", "左对齐"],
-              ["center", "居中"],
-              ["right", "右对齐"],
+              ["left", t("左对齐")],
+              ["center", t("居中")],
+              ["right", t("右对齐")],
             ] as const
           ).map(([align, label]) => (
             <button
@@ -503,9 +504,9 @@ export function NoteEditorToolbar({
       ),
       overflowItems: (
         [
-          ["left", "左对齐"],
-          ["center", "居中"],
-          ["right", "右对齐"],
+          ["left", t("左对齐")],
+          ["center", t("居中")],
+          ["right", t("右对齐")],
         ] as const
       ).map(([align, label]) => ({
         key: `align-${align}`,
@@ -517,8 +518,8 @@ export function NoteEditorToolbar({
     {
       id: "todo",
       kind: "btn",
-      title: "待办",
-      label: "待办",
+      title: t("待办"),
+      label: t("待办"),
       disabled,
       onClick: () => run({ type: "todo" }),
       render: () => <Icon name="check-circle" size={13} />,
@@ -526,8 +527,8 @@ export function NoteEditorToolbar({
     {
       id: "callout",
       kind: "btn",
-      title: "高亮块",
-      label: "高亮块",
+      title: t("高亮块"),
+      label: t("高亮块"),
       disabled,
       onClick: insertCallout,
       render: () => <Icon name="light-bulb" size={13} />,
@@ -535,8 +536,8 @@ export function NoteEditorToolbar({
     {
       id: "ul",
       kind: "btn",
-      title: "无序列表",
-      label: "无序列表",
+      title: t("无序列表"),
+      label: t("无序列表"),
       disabled,
       onClick: () => run({ type: "ul" }),
       render: () => <List size={15} strokeWidth={2} />,
@@ -544,8 +545,8 @@ export function NoteEditorToolbar({
     {
       id: "ol",
       kind: "btn",
-      title: "有序列表",
-      label: "有序列表",
+      title: t("有序列表"),
+      label: t("有序列表"),
       disabled,
       onClick: () => run({ type: "ol" }),
       render: () => <ListOrdered size={15} strokeWidth={2} />,
@@ -558,15 +559,15 @@ export function NoteEditorToolbar({
       {
         id: "history",
         kind: "btn",
-        title: "历史版本",
-        label: "历史版本",
+        title: t("历史版本"),
+        label: t("历史版本"),
         active: historyOpen,
         disabled: false,
         onClick: () => onOpenHistory(),
         render: () => (
           <>
             <Icon name="arrow-path" size={13} />
-            <span className="mn-md-tb__label">历史</span>
+            <span className="mn-md-tb__label">{t("历史")}</span>
           </>
         ),
       },
@@ -577,14 +578,14 @@ export function NoteEditorToolbar({
     tools.push({
       id: "hide",
       kind: "btn",
-      title: "隐藏工具栏",
-      label: "隐藏工具栏",
+      title: t("隐藏工具栏"),
+      label: t("隐藏工具栏"),
       disabled: false,
       onClick: () => onHide(),
       render: () => (
         <>
           <Icon name="chevron-left" size={12} />
-          <span className="mn-md-tb__label">隐藏</span>
+          <span className="mn-md-tb__label">{t("隐藏")}</span>
         </>
       ),
     });
@@ -845,7 +846,7 @@ export function NoteEditorToolbar({
             ref={moreBtnRef}
             type="button"
             className={`mn-md-tb__btn${moreOpen ? " is-active" : ""}`}
-            title="更多"
+            title={t("更多")}
             onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setMoreOpen((v) => !v);
@@ -856,7 +857,7 @@ export function NoteEditorToolbar({
           }}
         >
             <Icon name="ellipsis-horizontal" size={14} />
-            <span className="mn-md-tb__label">更多</span>
+            <span className="mn-md-tb__label">{t("更多")}</span>
           </button>
         ) : null}
       </div>
@@ -877,9 +878,9 @@ export function NoteEditorToolbarReveal({
   return (
     <div className="mn-md-tb mn-md-tb--reveal" role="toolbar">
       <div className="mn-md-tb__tools">
-        <ToolBtn title="显示工具栏" disabled={false} onClick={onShow}>
+        <ToolBtn title={t("显示工具栏")} disabled={false} onClick={onShow}>
           <Icon name="bars-3" size={13} />
-          <span className="mn-md-tb__label">工具栏</span>
+          <span className="mn-md-tb__label">{t("工具栏")}</span>
         </ToolBtn>
       </div>
       {trailing ? <div className="mn-md-tb__trail">{trailing}</div> : null}
