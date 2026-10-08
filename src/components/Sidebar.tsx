@@ -13,6 +13,7 @@ import { TextPromptDialog } from "@/components/TextPromptDialog";
 import { WindowTrafficLights } from "@/components/WindowTrafficLights";
 import * as api from "@/lib/api";
 import { useBrand } from "@/hooks/useBrand";
+import { useLibraryTransfer } from "@/hooks/useLibraryTransfer";
 import { handleWindowDragMouseDown } from "@/lib/windowDrag";
 import { SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN, useAppStore, } from "@/store/appStore";
 import type { LibraryNotebook, LibraryNote, SidebarPage } from "@/types/library";
@@ -296,6 +297,7 @@ function NotebookTree({ nodes, depth, query, dragState, dropState, onNotebookCon
     </>);
 }
 export function Sidebar() {
+    const transfer = useLibraryTransfer();
     const brand = useBrand();
     const notebooks = useAppStore((s) => s.notebooks);
     const selected = useAppStore((s) => s.selected);
@@ -575,6 +577,17 @@ export function Sidebar() {
                 label: t("新建笔记"),
                 onSelect: () => void createAndPromptNote(() => createNoteInNotebook(nb.id)),
             },
+            {
+                id: "import",
+                label: t("导入"),
+                disabled: transfer.busy,
+                submenu: [
+                    { id: "import-files", label: t("Markdown 文件…"),
+                        onSelect: () => void transfer.run("files", nb.id) },
+                    { id: "import-folder", label: t("文件夹中的 Markdown…"),
+                        onSelect: () => void transfer.run("folder", nb.id) },
+                ],
+            },
         ];
         if (nb.parentPath == null) {
             items.push({
@@ -710,6 +723,11 @@ export function Sidebar() {
       </div>
 
       <div className={`mn-sidebar__footer ${collapsed ? "is-collapsed" : ""}`}>
+        {!collapsed && (transfer.busy || transfer.message || transfer.error) &&
+          <p className={`mn-sidebar__transfer${transfer.error ? " mn-error" : ""}`}
+            role={transfer.error ? "alert" : "status"}>
+            {transfer.error || (transfer.busy ? t("导入中…") : transfer.message)}
+          </p>}
         <SidebarRow title={collapsed ? "" : t("回收站")} icon={<Icon name="trash" size={13}/>} selected={selected === "trash"} badge={collapsed ? null : trashCount} onClick={() => void select("trash")}/>
         <SidebarRow title={collapsed ? "" : t("设置")} icon={<Icon name="cog-6-tooth" size={13}/>} selected={selected === "settings"} onClick={() => void select("settings")}/>
       </div>

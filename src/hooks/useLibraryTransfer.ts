@@ -8,12 +8,12 @@ export function useLibraryTransfer(notePath?: string, targetNotebookPath?: strin
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const run = useCallback(async (kind: TransferKind) => {
+  const run = useCallback(async (kind: TransferKind, importTarget = targetNotebookPath) => {
     if (running.current) return;
     running.current = true;
     setBusy(true); setError(""); setMessage("");
     try {
-      const result = await chooseLibraryTransfer(kind, notePath, targetNotebookPath);
+      const result = await chooseLibraryTransfer(kind, notePath, importTarget);
       if (!result) return;
       await useAppStore.getState().refresh();
       setMessage(kind === "files" || kind === "folder"

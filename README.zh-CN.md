@@ -8,7 +8,7 @@
 
 打开一篇笔记就能开始写。习惯 Markdown，就直接输入；想少记语法，就用工具栏。文件保存在自己的电脑上，需要时可以导出到其他工具，不需要注册账号或配置服务端。
 
-![MeteorNoteEditor macOS 主界面：笔记本侧栏与清爽的 Markdown 编辑页面](docs/screenshots/overview.png)
+![MeteorNoteEditor macOS 中文主界面：笔记本侧栏与清爽的 Markdown 编辑页面](docs/screenshots/overview_zh.png)
 
 ## 为什么做这个笔记本
 

@@ -14,6 +14,7 @@ let counter=0;
 mockWindows('main');
 mockIPC((command,payload)=>{
   if(command==='plugin:dialog|open') return mode==='cancel'?null:['/fixture/模拟导入.md'];
+  if(command==='plugin:window|is_fullscreen'||command==='plugin:window|is_maximized') return false;
   if(command==='list_notebooks') return structuredClone([root]);
   if(command==='library_stats') return {noteCount:root.notes.length+child.notes.length,notebookCount:2,trashCount:0};
   if(command==='transfer_library') {
@@ -29,10 +30,12 @@ mockIPC((command,payload)=>{
   throw new Error(`Unexpected fixture command: ${command}`);
 },{shouldMockEvents:true});
 const {PageContent}=await import('../src/components/PageContent');
+const {Sidebar}=await import('../src/components/Sidebar');
 const {useAppStore}=await import('../src/store/appStore');
-useAppStore.setState({notebooks:[root]});
+useAppStore.setState({notebooks:[root],selected:{notebook:child.id},expandedNotebooks:new Set([root.id,child.id])});
 function Fixture() {
-  const [page,setPage]=useState<SidebarPage>({notebook:child.id});
+  const page=useAppStore(state=>state.selected);
+  const setPage=(selected:SidebarPage)=>useAppStore.setState({selected});
   const [request,setRequest]=useState('尚未导入');
   report=setRequest;
   return <div style={{padding:16}}>
@@ -45,7 +48,7 @@ function Fixture() {
         <option value="success">正常导入</option><option value="cancel">取消选择</option><option value="failure">导入失败</option>
       </select>
     </nav>
-    <div style={{height:360,border:'1px solid var(--mn-border)'}}><PageContent page={page} /></div>
+    <div style={{height:460,display:"flex",border:"1px solid var(--mn-border)"}}><Sidebar/><div style={{flex:1,minWidth:0}}><PageContent page={page} /></div></div>
     <pre aria-label="最近导入请求">{request}</pre>
   </div>;
 }
