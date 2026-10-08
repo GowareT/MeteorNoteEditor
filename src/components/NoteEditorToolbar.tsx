@@ -64,6 +64,7 @@ function ToolBtn({
   onClick,
   children,
   className = "",
+  expanded,
 }: {
   title: string;
   active?: boolean;
@@ -71,12 +72,15 @@ function ToolBtn({
   onClick: () => void;
   children: ReactNode;
   className?: string;
+  expanded?: boolean;
 }) {
   return (
     <button
       type="button"
       className={`mn-md-tb__btn${active ? " is-active" : ""} ${className}`.trim()}
       title={title}
+      aria-haspopup={expanded === undefined ? undefined : "menu"}
+      aria-expanded={expanded}
       disabled={disabled}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
@@ -94,6 +98,7 @@ type ToolId =
   | "insert"
   | "sep-fmt"
   | "bold"
+  | "heading"
   | "italic"
   | "underline"
   | "strike"
@@ -143,6 +148,14 @@ export function NoteEditorToolbar({
   onHide,
   trailing,
 }: Props) {
+  const [headingOpen, setHeadingOpen] = useState(false);
+  const headingRef = useRef<HTMLDivElement>(null);
+  const headingOptions = [
+    { level: 1, label: t("一级标题") },
+    { level: 2, label: t("二级标题") },
+    { level: 3, label: t("三级标题") },
+    { level: 0, label: t("正文") },
+  ] as const;
   const [insertOpen, setInsertOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
   const [highlightOpen, setHighlightOpen] = useState(false);
@@ -204,6 +217,7 @@ export function NoteEditorToolbar({
   };
 
   const closeMenus = () => {
+    setHeadingOpen(false);
     setInsertOpen(false);
     setColorOpen(false);
     setHighlightOpen(false);
@@ -221,6 +235,7 @@ export function NoteEditorToolbar({
       setOpen: (v) => {
         setInsertOpen(v);
         if (v) {
+          setHeadingOpen(false);
           setColorOpen(false);
           setHighlightOpen(false);
           setAlignOpen(false);
@@ -321,6 +336,47 @@ export function NoteEditorToolbar({
     },
     { id: "sep-fmt", kind: "sep" },
     {
+      id: "heading",
+      kind: "menu",
+      title: t("标题"),
+      label: t("标题"),
+      open: headingOpen,
+      setOpen: (open) => {
+        closeMenus();
+        setHeadingOpen(open);
+      },
+      menuRef: headingRef,
+      trigger: <><span className="mn-md-tb__label">{t("标题")}</span><Icon name="chevron-down" size={10} /></>,
+      panel: (
+        <div className="mn-md-tb__pop" role="menu" aria-label={t("标题")}>
+          {headingOptions.map(({ level, label }) => (
+            <button
+              key={level}
+              type="button"
+              role="menuitemradio"
+              aria-checked={formatMarks.heading === level}
+              className={`mn-md-tb__pop-item${formatMarks.heading === level ? " is-active" : ""}`}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                closeMenus();
+                run({ type: "heading", level });
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ),
+      overflowItems: headingOptions.map(({ level, label }) => ({
+        key: `heading-${level}`,
+        label,
+        onClick: () => {
+          closeMenus();
+          run({ type: "heading", level });
+        },
+      })),
+    },
+    {
       id: "bold",
       kind: "btn",
       title: t("加粗"),
@@ -369,6 +425,7 @@ export function NoteEditorToolbar({
       setOpen: (v) => {
         setHighlightOpen(v);
         if (v) {
+          setHeadingOpen(false);
           setInsertOpen(false);
           setColorOpen(false);
           setAlignOpen(false);
@@ -427,6 +484,7 @@ export function NoteEditorToolbar({
       setOpen: (v) => {
         setColorOpen(v);
         if (v) {
+          setHeadingOpen(false);
           setInsertOpen(false);
           setHighlightOpen(false);
           setAlignOpen(false);
@@ -474,6 +532,7 @@ export function NoteEditorToolbar({
       setOpen: (v) => {
         setAlignOpen(v);
         if (v) {
+          setHeadingOpen(false);
           setInsertOpen(false);
           setColorOpen(false);
           setHighlightOpen(false);
@@ -675,10 +734,11 @@ export function NoteEditorToolbar({
   }, [moreOpen]);
 
   useEffect(() => {
-    if (!insertOpen && !colorOpen && !highlightOpen && !alignOpen && !moreOpen)
+    if (!headingOpen && !insertOpen && !colorOpen && !highlightOpen && !alignOpen && !moreOpen)
       return;
     const onDown = (e: MouseEvent) => {
       const t = e.target as Node;
+      if (headingOpen && !headingRef.current?.contains(t)) setHeadingOpen(false);
       if (insertOpen && !insertRef.current?.contains(t)) setInsertOpen(false);
       if (colorOpen && !colorRef.current?.contains(t)) setColorOpen(false);
       if (highlightOpen && !highlightRef.current?.contains(t))
@@ -698,7 +758,7 @@ export function NoteEditorToolbar({
       window.clearTimeout(timer);
       window.removeEventListener("mousedown", onDown);
     };
-  }, [insertOpen, colorOpen, highlightOpen, alignOpen, moreOpen]);
+  }, [headingOpen, insertOpen, colorOpen, highlightOpen, alignOpen, moreOpen]);
 
   const visible = tools.slice(0, visibleCount);
   const overflow = tools.slice(visibleCount);
@@ -737,6 +797,7 @@ export function NoteEditorToolbar({
         <ToolBtn
           title={tool.title}
           active={tool.open}
+          expanded={tool.open}
           disabled={disabled}
           onClick={() => tool.setOpen(!tool.open)}
         >
@@ -848,14 +909,15 @@ export function NoteEditorToolbar({
             className={`mn-md-tb__btn${moreOpen ? " is-active" : ""}`}
             title={t("更多")}
             onMouseDown={(e) => e.preventDefault()}
-          onClick={() => {
-            setMoreOpen((v) => !v);
-            setInsertOpen(false);
-            setColorOpen(false);
-            setHighlightOpen(false);
-            setAlignOpen(false);
-          }}
-        >
+            onClick={() => {
+              setMoreOpen((v) => !v);
+              setHeadingOpen(false);
+              setInsertOpen(false);
+              setColorOpen(false);
+              setHighlightOpen(false);
+              setAlignOpen(false);
+            }}
+          >
             <Icon name="ellipsis-horizontal" size={14} />
             <span className="mn-md-tb__label">{t("更多")}</span>
           </button>

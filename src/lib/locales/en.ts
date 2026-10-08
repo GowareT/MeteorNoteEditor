@@ -190,6 +190,7 @@ export const en: Record<string, string> = {
   "链接文字": "Link text",
   "| 列1 | 列2 |\n| --- | --- |\n|  |  |": "| Column 1 | Column 2 |\n| --- | --- |\n|  |  |",
   "/标题1": "/heading1",
+  "正文": "Body text",
   "一级标题": "Heading 1",
   "/标题2": "/heading2",
   "二级标题": "Heading 2",

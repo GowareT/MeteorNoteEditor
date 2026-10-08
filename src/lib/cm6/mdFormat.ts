@@ -9,6 +9,7 @@ import { alignmentBlocks, lineAlignment, type TextAlign } from "./alignment";
 export type { TextAlign } from "./alignment";
 
 export type FormatMarks = {
+  heading?: number;
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
@@ -19,6 +20,7 @@ export type FormatMarks = {
 };
 
 export type FormatCommand =
+  | { type: "heading"; level: 0 | 1 | 2 | 3 }
   | { type: "bold" }
   | { type: "italic" }
   | { type: "underline" }
@@ -750,6 +752,55 @@ function lineRange(state: EditorState) {
   return { start, end };
 }
 
+// Retain quote/list containers and inline formatting when changing a heading.
+function headingLineInfo(state: EditorState, number: number) {
+  const line = state.doc.line(number);
+  const container = /^[ \t]*(?:>[ \t]*)*(?:(?:[-+*]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/.exec(line.text)![0];
+  let node = syntaxTree(state).resolveInner(Math.min(line.to, line.from + container.length + 1), -1);
+  for (;;) {
+    const heading = /^(ATX|Setext)Heading([1-6])$/.exec(node.name);
+    if (heading) return { line, container, level: Number(heading[2]), node, blocked: false };
+    if (["FencedCode", "CodeBlock", "Table", "HTMLBlock", "AlignmentBoundary"].includes(node.name))
+      return { line, container, level: 0, node: null, blocked: true };
+    if (!node.parent) break;
+    node = node.parent;
+  }
+  return { line, container, level: 0, node: null, blocked: false };
+}
+
+function setHeading(view: EditorView, level: 0 | 1 | 2 | 3) {
+  const { state } = view;
+  const { start, end } = lineRange(state);
+  const changes: { from: number; to: number; insert: string }[] = [];
+  const underlines = new Set<number>();
+  for (let n = start; n <= end; n++) {
+    const { line, container, node, blocked } = headingLineInfo(state, n);
+    if (blocked) continue;
+    if (node?.name.startsWith("Setext")) {
+      const underline = state.doc.lineAt(node.to);
+      if (!underlines.has(underline.from)) {
+        underlines.add(underline.from);
+        changes.push({ from: underline.from - 1, to: underline.to, insert: "" });
+      }
+      if (n === underline.number) continue;
+    }
+    const from = line.from + container.length;
+    const prefix = node?.name.startsWith("ATX")
+      ? /^#{1,6}(?:[ \t]+|$)/.exec(line.text.slice(container.length))?.[0] ?? ""
+      : "";
+    const insert = level ? "#".repeat(level) + " " : "";
+    if (prefix !== insert) changes.push({ from, to: from + prefix.length, insert });
+    // Optional closing hashes are syntax, not part of the title text.
+    if (node?.name.startsWith("ATX")) {
+      const closing = /[ \t]+#+[ \t]*$/.exec(line.text.slice(container.length + prefix.length));
+      if (closing) changes.push({ from: line.to - closing[0].length, to: line.to, insert: "" });
+    }
+  }
+  if (!changes.length) return;
+  const changeSet = state.changes(changes.sort((a, b) => a.from - b.from));
+  view.dispatch({ changes: changeSet, selection: state.selection.map(changeSet, 1) });
+}
+
 function mapListLines(
   view: EditorView,
   mapper: (line: string, index: number) => string,
@@ -1108,10 +1159,16 @@ export function detectFormatMarksAtSelection(state: EditorState): FormatMarks {
   const selectedLines = lineRange(state);
   const alignments = new Set<TextAlign>();
   const boundaries = new Set(aligned.flatMap(block => [block.openLine, block.closeLine]));
+  const headings = new Set<number>();
   for (let line = selectedLines.start; line <= selectedLines.end; line++) {
-    if (!boundaries.has(line)) alignments.add(lineAlignment(aligned, line));
+    if (!boundaries.has(line)) {
+      alignments.add(lineAlignment(aligned, line));
+      const info = headingLineInfo(state, line);
+      if (!info.blocked) headings.add(info.level);
+    }
   }
   if (alignments.size === 1) marks.align = [...alignments][0];
+  if (headings.size === 1) marks.heading = [...headings][0];
 
   // 混合选区只有在整段都被同一格式覆盖时才显示为激活。
   if (from !== to) {
@@ -1216,6 +1273,7 @@ export function detectFormatMarksAtSelection(state: EditorState): FormatMarks {
 export { insertCalloutSnippet };
 
 export function applyFormat(view: EditorView, cmd: FormatCommand) {
+  if (view.state.readOnly) return;
   view.focus();
   const original = view.state;
   const selection = original.selection.main;
@@ -1244,6 +1302,9 @@ export function applyFormat(view: EditorView, cmd: FormatCommand) {
   }
   if ((cmd.type === "color" || cmd.type === "highlight") && isPlainQuote(view.state, view.state.selection.main.from)) return;
   switch (cmd.type) {
+    case "heading":
+      setHeading(view, cmd.level);
+      break;
     case "bold":
       if (!unwrapMarkdownFormat(view, "StrongEmphasis")) {
         applyMarkdownFormat(view, "StrongEmphasis", "**", "**");

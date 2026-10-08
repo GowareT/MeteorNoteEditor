@@ -122,3 +122,49 @@ applyFormat(inlineHighlight,{type:'highlight',color:'#ffe1a6'});
 assert.ok(inlineHighlight.state.doc.toString().startsWith('- [ ] '));
 assert.ok(inlineHighlight.state.doc.toString().includes('<mark'));
 console.log('Passed: task/callout exclusivity, existing malformed prefixes, partial and multiline conversions, inline highlight compatibility.');
+
+// Paragraph commands preserve text, inline formatting, containers and selection.
+for (const [source, expectedHeading, expectedBody] of [
+  ['内容', '## 内容', '内容'],
+  ['### **内容**', '## **内容**', '**内容**'],
+  ['###### 内容 ###', '## 内容', '内容'],
+  ['> 内容', '> ## 内容', '> 内容'],
+  ['- 内容', '- ## 内容', '- 内容'],
+  ['内容\n===', '## 内容', '内容'],
+]) {
+  const view = editor(source, '内容');
+  applyFormat(view, { type: 'heading', level: 2 });
+  assert.equal(view.state.doc.toString(), expectedHeading);
+  assert.equal(view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to), '内容');
+  assert.equal(detectFormatMarksAtSelection(view.state).heading, 2);
+  applyFormat(view, { type: 'heading', level: 2 });
+  assert.equal(view.state.doc.toString(), expectedHeading, 'Selecting the same level must be idempotent');
+  applyFormat(view, { type: 'heading', level: 0 });
+  assert.equal(view.state.doc.toString(), expectedBody);
+  assert.equal(detectFormatMarksAtSelection(view.state).heading, 0);
+}
+for (const reverse of [false, true]) {
+  const view = editor('甲乙\n### 丙丁\n末行', '');
+  view.dispatch({selection:EditorSelection.range(reverse?9:1,reverse?1:9)});
+  assert.equal(detectFormatMarksAtSelection(view.state).heading, undefined);
+  applyFormat(view, {type:'heading',level:1});
+  assert.equal(view.state.doc.toString(), '# 甲乙\n# 丙丁\n末行');
+  assert.equal(view.state.selection.main.anchor, reverse?9:3);
+  assert.equal(view.state.selection.main.head, reverse?3:9);
+}
+for (const level of [1, 2, 3, 0]) {
+  const view = editor('', '');
+  applyFormat(view, {type:'heading',level});
+  assert.equal(view.state.doc.toString(), level?'#'.repeat(level)+' ':'');
+  assert.equal(view.state.selection.main.head, view.state.doc.length);
+}
+for (const source of ['```md\n# 内容\n```', '    # 内容']) {
+  const view = editor(source, '内容');
+  applyFormat(view, {type:'heading',level:2});
+  assert.equal(view.state.doc.toString(), source, 'Code contents must remain literal');
+}
+const readonlyHeading = editor('内容', '内容');
+readonlyHeading.state = EditorState.create({doc:'内容',extensions:[EditorState.readOnly.of(true)]});
+applyFormat(readonlyHeading, {type:'heading',level:1});
+assert.equal(readonlyHeading.state.doc.toString(), '内容');
+console.log('Passed: heading levels, body text, idempotence, inline formatting, containers, Setext conversion, selection direction, empty lines and code/read-only protection.');
