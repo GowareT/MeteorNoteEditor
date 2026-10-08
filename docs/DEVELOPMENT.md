@@ -40,12 +40,15 @@ npm run tauri:dev
 | 地址 | 验证内容 |
 | --- | --- |
 | `http://localhost:5183/scripts/editor-regression.html` | Markdown 格式组合、光标、表格和任务布局 |
+| `http://localhost:5183/scripts/pointer-regression.html` | 正文、标题、列表、对齐和自动换行的点击、双击及正反向拖选；可切换字号、宽度和源码模式 |
 | `http://localhost:5183/scripts/app-smoke.html` | 使用内存模拟数据的编辑、设置、列表与回收站流程 |
 | `http://localhost:5183/scripts/notebook-import-regression.html` | 使用模拟对话框与内存数据检查目标笔记本、导入后刷新、取消与失败提示 |
 | `http://localhost:5183/scripts/branding-regression.html` | 工作区标识相关检查 |
 | `http://localhost:5183/scripts/pdf-smoke.html` | PDF 排版测试内容 |
 
 这些页面不是网页版产品，也不能替代原生窗口、系统对话框、多窗口关闭和安装流程的验收。已完成的验证见 [验证记录](VERIFICATION.md)。
+
+鼠标测试页使用内存中的示例文档，不会修改笔记。点击 `Run pointer checks` 运行检查，也可用 `?autorun&width=320&font=20` 自动运行；增加 `&source` 检查源码模式。自动检查通过合成鼠标事件覆盖坐标和选区逻辑，仍需手动检查真实双击、拖选和滚动。
 
 ## 项目结构
 

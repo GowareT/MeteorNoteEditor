@@ -32,13 +32,12 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
         maxWidth: "none",
       },
       ".cm-content": {
-        padding:
-          "18px var(--mn-note-gutter, 22px) max(22vh, 120px)",
+        padding: "18px max(var(--mn-note-gutter, 22px), calc((100% - var(--mn-note-content-max-width, 920px)) / 2 + var(--mn-note-gutter, 22px))) max(22vh, 120px)",
         caretColor: "var(--mn-accent, #3375fa)",
         minHeight: "calc(100% + 22vh)",
         width: "100%",
-        maxWidth: "var(--mn-note-content-max-width, 920px)",
-        margin: "0 auto",
+        maxWidth: "none",
+        margin: "0",
         boxSizing: "border-box",
         fontWeight: "400",
       },

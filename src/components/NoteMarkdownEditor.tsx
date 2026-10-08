@@ -65,7 +65,7 @@ import "./NoteMarkdownEditor.css";
 import "katex/dist/katex.min.css";
 
 function clickShouldCreateTrailingLine(event: MouseEvent, view: EditorView) {
-  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) {
+  if (event.button !== 0 || event.detail > 1 || event.metaKey || event.ctrlKey || event.shiftKey) {
     return false;
   }
   const target = event.target;
@@ -86,74 +86,10 @@ function clickShouldCreateTrailingLine(event: MouseEvent, view: EditorView) {
   ) {
     return false;
   }
-  const endCoords = view.coordsAtPos(view.state.doc.length, 1);
-  if (!endCoords) return false;
-  return event.clientY > endCoords.bottom + 12;
-}
-
-/**
- * Heading lines use large vertical padding for visual spacing. Clicks on that
- * padding often resolve to the previous/next line in CodeMirror, so the short
- * heading text feels hard to hit. Snap the caret back onto the heading line.
- */
-function snapClickToHeadingLine(event: MouseEvent, view: EditorView): boolean {
-  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) {
-    return false;
-  }
-  const target = event.target;
-  if (!(target instanceof Element)) return false;
-  if (
-    target.closest(
-      "button, input, textarea, select, a, .cm-lp-table-wrap, .cm-lp-image-wrap",
-    )
-  ) {
-    return false;
-  }
-
-  const headingEl = target.closest(".cm-line.cm-lp-heading-line");
-  let lineEl: HTMLElement | null =
-    headingEl instanceof HTMLElement ? headingEl : null;
-
-  // Clicks can also land on .cm-content inside the heading's padding box.
-  if (!lineEl) {
-    const hit = document.elementFromPoint(event.clientX, event.clientY);
-    if (hit instanceof Element) {
-      const found = hit.closest(".cm-line.cm-lp-heading-line");
-      if (found instanceof HTMLElement) lineEl = found;
-    }
-  }
-  if (!lineEl || !view.contentDOM.contains(lineEl)) return false;
-
-  const rect = lineEl.getBoundingClientRect();
-  if (
-    event.clientX < rect.left ||
-    event.clientX > rect.right ||
-    event.clientY < rect.top ||
-    event.clientY > rect.bottom
-  ) {
-    return false;
-  }
-
-  // Map through the vertical center of the heading so padding clicks stay on it.
-  const midY = rect.top + rect.height / 2;
-  const x = Math.min(Math.max(event.clientX, rect.left + 4), rect.right - 4);
-  const snapped = view.posAtCoords({ x, y: midY });
-  if (snapped == null) return false;
-
-  const raw = view.posAtCoords({ x: event.clientX, y: event.clientY });
-  const want = view.state.doc.lineAt(snapped);
-  if (raw != null && view.state.doc.lineAt(raw).number === want.number) {
-    return false;
-  }
-
-  const anchor = Math.min(Math.max(snapped, want.from), want.to);
-  event.preventDefault();
-  view.dispatch({
-    selection: { anchor },
-    effects: EditorView.scrollIntoView(anchor, { y: "nearest" }),
-  });
-  view.focus();
-  return true;
+  // Include the last line's padding/widgets. Its text rectangle alone is
+  // shorter than its clickable area, especially for headings and lists.
+  const endBlock = view.lineBlockAt(view.state.doc.length);
+  return event.clientY > view.documentTop + endBlock.bottom + 12;
 }
 
 /** 笔记首行 `# 标题` 之后才是正文；修改时间是挂在标题后的装饰，不属于正文。 */
@@ -654,7 +590,6 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
                 setActiveEditorToolbarTarget(null);
                 emitEditorFormatChanged(detectFormatMarksAtSelection(view.state));
               }
-              if (snapClickToHeadingLine(event, view)) return true;
               if (!clickShouldCreateTrailingLine(event, view)) return false;
               event.preventDefault();
               createTrailingLine(view);

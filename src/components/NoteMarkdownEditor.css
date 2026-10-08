@@ -26,8 +26,11 @@
   font-weight: 400;
   min-height: calc(100% + 22vh);
   width: 100%;
-  max-width: var(--mn-note-content-max-width, 920px);
-  margin: 0 auto;
+  /* Keep the gutters inside the editable surface so mouse gestures there
+     use the same line hit-testing and selection handling as the text. */
+  max-width: none;
+  margin: 0;
+  padding-inline: max(var(--mn-note-gutter, 22px), calc((100% - var(--mn-note-content-max-width, 920px)) / 2 + var(--mn-note-gutter, 22px)));
   box-sizing: border-box;
   padding-bottom: max(22vh, 120px) !important;
 }
