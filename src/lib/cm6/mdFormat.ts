@@ -4,7 +4,8 @@ import type { EditorView } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import * as api from "@/lib/api";
 
-export type TextAlign = "left" | "center" | "right";
+import { alignmentBlocks, lineAlignment, type TextAlign } from "./alignment";
+export type { TextAlign } from "./alignment";
 
 export type FormatMarks = {
   bold?: boolean;
@@ -787,58 +788,6 @@ function mapListLines(
   view.dispatch({ changes, selection });
 }
 
-const ALIGN_OPEN_RE =
-  /^<div\s+align=["'](?:center|right)["'](?:\s+style=["'][^"']*["'])?>\s*$/i;
-const ALIGN_CLOSE_RE = /^<\/div>\s*$/i;
-
-function stripOuterAlignBlock(text: string) {
-  return text.replace(
-    /^<div\s+align=["'][^"']*["'](?:\s+style=["'][^"']*["'])?>\s*\n?([\s\S]*?)\n?\s*<\/div>$/i,
-    "$1",
-  );
-}
-
-function findAlignBlockAroundSelection(state: EditorState) {
-  const { from, to } = state.selection.main;
-  const startLine = state.doc.lineAt(from);
-  const endLine = state.doc.lineAt(to === from ? to : Math.max(from, to - 1));
-
-  for (let openNumber = startLine.number; openNumber >= 1; openNumber -= 1) {
-    const openLine = state.doc.line(openNumber);
-    if (openNumber !== startLine.number && ALIGN_CLOSE_RE.test(openLine.text.trim())) {
-      break;
-    }
-    if (!ALIGN_OPEN_RE.test(openLine.text.trim())) continue;
-
-    for (
-      let closeNumber = openNumber + 1;
-      closeNumber <= state.doc.lines;
-      closeNumber += 1
-    ) {
-      const closeLine = state.doc.line(closeNumber);
-      if (!ALIGN_CLOSE_RE.test(closeLine.text.trim())) continue;
-      if (endLine.number >= closeNumber) return null;
-
-      const firstInnerLine = state.doc.line(Math.min(openNumber + 1, closeNumber));
-      const lastInnerLine = state.doc.line(Math.max(openNumber + 1, closeNumber - 1));
-      const innerFrom = firstInnerLine.from;
-      const innerTo =
-        closeNumber > openNumber + 1 ? lastInnerLine.to : firstInnerLine.from;
-
-      return {
-        from: openLine.from,
-        to: closeLine.to,
-        innerFrom,
-        innerTo,
-        inner: state.doc.sliceString(innerFrom, innerTo),
-      };
-    }
-    break;
-  }
-
-  return null;
-}
-
 function toggleListPrefix(view: EditorView, kind: "ul" | "ol" | "todo") {
   mapListLines(view, (line, index) => {
     const trimmed = line.replace(/^\s+/, "");
@@ -885,27 +834,61 @@ function toggleListPrefix(view: EditorView, kind: "ul" | "ol" | "todo") {
 }
 
 function applyAlign(view: EditorView, align: TextAlign) {
-  const existingBlock = findAlignBlockAroundSelection(view.state);
-  const { from, to, text } = selectedText(view.state);
-  const targetFrom = existingBlock?.from ?? from;
-  const targetTo = existingBlock?.to ?? to;
-  const body = existingBlock?.inner ?? (text || " ");
-  if (align === "left") {
-    const cleared = stripOuterAlignBlock(body);
-    view.dispatch({
-      changes: { from: targetFrom, to: targetTo, insert: cleared },
-      selection: EditorSelection.range(targetFrom, targetFrom + cleared.length),
-    });
-    return;
+  const { state } = view;
+  let { start, end } = lineRange(state);
+  // Keep the note's identity heading as the first Markdown line.
+  if (start === 1 && /^#\s+/.test(state.doc.line(1).text)) start++;
+  if (start > end) return;
+  // Keep structured Markdown blocks intact, including nested list indentation.
+  syntaxTree(state).iterate({ enter(node) {
+    if (!["FencedCode", "CodeBlock", "Table", "BulletList", "OrderedList", "Blockquote"].includes(node.name)) return;
+    const first = state.doc.lineAt(node.from).number;
+    const last = state.doc.lineAt(node.to).number;
+    if (first <= end && last >= start) { start = Math.min(start, first); end = Math.max(end, last); }
+    return false;
+  }});
+  const blocks = alignmentBlocks(state);
+  let first = start, last = end;
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const block of blocks) if (block.openLine <= last && block.closeLine >= first) {
+      const a = Math.min(first, block.openLine), b = Math.max(last, block.closeLine);
+      if (a !== first || b !== last) { first = a; last = b; changed = true; }
+    }
   }
-  const inner = stripOuterAlignBlock(body);
-  const insert = `<div align="${align}" style="text-align:${align}">\n${inner}\n</div>`;
-  const bodyFrom = targetFrom + insert.indexOf("\n") + 1;
-  const bodyTo = bodyFrom + inner.length;
-  view.dispatch({
-    changes: { from: targetFrom, to: targetTo, insert },
-    selection: EditorSelection.range(bodyFrom, bodyTo),
-  });
+  const boundaries = new Set(blocks.flatMap(block => [block.openLine, block.closeLine]));
+  const from = state.doc.line(first).from, to = state.doc.line(last).to;
+  const rows: Array<{from: number; to: number; text: string; align: TextAlign; output: number}> = [];
+  for (let number = first; number <= last; number++) {
+    if (boundaries.has(number)) continue;
+    const line = state.doc.line(number);
+    rows.push({from: line.from, to: line.to, text: line.text,
+      align: number >= start && number <= end ? align : lineAlignment(blocks, number), output: 0});
+  }
+  if (!rows.length) return;
+  let insert = '', current: TextAlign = 'left';
+  for (const row of rows) {
+    if (row.align !== current) {
+      if (current !== 'left') insert += '</div>\n';
+      if (row.align !== 'left') insert += `<div align="${row.align}" style="text-align:${row.align}">\n`;
+      current = row.align;
+    }
+    row.output = from + insert.length;
+    insert += row.text + '\n';
+  }
+  if (current !== 'left') insert += '</div>\n';
+  insert = insert.slice(0, -1);
+  if (insert === state.doc.sliceString(from, to)) return;
+  const mapPosition = (position: number) => {
+    if (position < from) return position;
+    if (position > to) return position + insert.length - (to - from);
+    const row = rows.find(row => position <= row.to) ?? rows[rows.length - 1]!;
+    return row.output + Math.max(0, Math.min(row.text.length, position - row.from));
+  };
+  view.dispatch({changes: {from, to, insert}, selection: EditorSelection.create(
+    state.selection.ranges.map(range => EditorSelection.range(mapPosition(range.anchor), mapPosition(range.head))),
+    state.selection.mainIndex,
+  )});
 }
 
 function applyColor(view: EditorView, color: string) {
@@ -1120,6 +1103,14 @@ export function detectFormatMarksAtSelection(state: EditorState): FormatMarks {
     state.doc.sliceString(state.selection.main.from, state.selection.main.to),
   );
   const { from, to } = inlineFormatTarget(state);
+  const aligned = alignmentBlocks(state);
+  const selectedLines = lineRange(state);
+  const alignments = new Set<TextAlign>();
+  const boundaries = new Set(aligned.flatMap(block => [block.openLine, block.closeLine]));
+  for (let line = selectedLines.start; line <= selectedLines.end; line++) {
+    if (!boundaries.has(line)) alignments.add(lineAlignment(aligned, line));
+  }
+  if (alignments.size === 1) marks.align = [...alignments][0];
 
   // 混合选区只有在整段都被同一格式覆盖时才显示为激活。
   if (from !== to) {

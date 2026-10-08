@@ -1,6 +1,6 @@
 # 验证记录
 
-[返回项目首页](../README.md) · [开发指南](DEVELOPMENT.md)
+[返回中文项目说明](../README.zh-CN.md) · [开发指南](DEVELOPMENT.md)
 
 验证环境：macOS、Node.js 20、Tauri 2。以下记录汇总独立提取及后续功能修改时执行的检查，不是每次提交自动更新的测试报告，不代表所有功能或平台已覆盖。
 

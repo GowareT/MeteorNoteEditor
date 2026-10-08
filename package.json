@@ -13,7 +13,7 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "test": "node scripts/test-editor-formatting.mjs && node scripts/test-code-highlight.mjs && node scripts/test-image-file-picker.mjs && node scripts/test-notebook-deletion.mjs && node scripts/test-trash-dates.mjs && node scripts/test-standalone.mjs && node scripts/test-simplified-features.mjs && node scripts/test-document-sessions.mjs && node scripts/test-library-transfer.mjs && node scripts/test-branding.mjs && node scripts/test-review-regressions.mjs && node scripts/test-platform.mjs && node scripts/test-note-sort.mjs",
+    "test": "node scripts/test-editor-formatting.mjs && node scripts/test-editor-alignment.mjs && node scripts/test-code-highlight.mjs && node scripts/test-image-file-picker.mjs && node scripts/test-notebook-deletion.mjs && node scripts/test-trash-dates.mjs && node scripts/test-standalone.mjs && node scripts/test-simplified-features.mjs && node scripts/test-document-sessions.mjs && node scripts/test-library-transfer.mjs && node scripts/test-branding.mjs && node scripts/test-review-regressions.mjs && node scripts/test-platform.mjs && node scripts/test-note-sort.mjs",
     "notices": "node scripts/generate-notices.mjs"
   },
   "dependencies": {

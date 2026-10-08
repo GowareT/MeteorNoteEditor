@@ -1,10 +1,10 @@
-import { markdownLanguage } from "@codemirror/lang-markdown";
+import { alignmentParser } from "./cm6/alignment";
 
 export type OutlineHeading = { id: string; level: number; text: string; offset: number };
 
 export function parseOutlineHeadings(markdown: string): OutlineHeading[] {
   const headings: OutlineHeading[] = [];
-  markdownLanguage.parser.parse(markdown).iterate({
+  alignmentParser.parse(markdown).iterate({
     enter(node) {
       const match = /^(?:ATX|Setext)Heading([1-6])$/.exec(node.name);
       if (!match) return;

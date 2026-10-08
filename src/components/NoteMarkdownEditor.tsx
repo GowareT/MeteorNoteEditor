@@ -46,6 +46,7 @@ import {
   slashCommandExtension,
   type SlashActionId,
 } from "@/lib/cm6/slashCommands";
+import { alignmentMarkdown } from "@/lib/cm6/alignment";
 import { livePreviewExtension } from "@/lib/cm6/livePreview";
 import { markdownEditingKeymap } from "@/lib/cm6/markdownEditingKeys";
 import { mathPreviewExtension } from "@/lib/cm6/mathPreview";
@@ -584,6 +585,7 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
           closeBrackets(),
           markdown({
             base: markdownLanguage,
+            extensions: [alignmentMarkdown],
             codeLanguages: resolveCodeLanguage,
             addKeymap: true,
           }),

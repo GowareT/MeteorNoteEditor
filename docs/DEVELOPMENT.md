@@ -1,6 +1,6 @@
 # 开发指南
 
-[返回项目首页](../README.md) · [贡献指南](../CONTRIBUTING.md)
+[返回中文项目说明](../README.zh-CN.md) · [贡献指南](../CONTRIBUTING.md)
 
 ## 环境准备
 
@@ -63,6 +63,7 @@ npm run tauri:dev
 | `src-tauri/src/lifecycle.rs` | 窗口关闭与退出协调 |
 | `src-tauri/default-notes/` | 新笔记库的默认示例 |
 | `scripts/` | 回归检查与维护脚本 |
+| `docs/screenshots/` | README 共用的应用效果截图与添加说明 |
 
 当前桌面应用标识为 `org.meteornote.editor`，显示偏好使用 `meteornote-editor.` 前缀。笔记包结构与数据位置见 [使用指南](USER_GUIDE.md)。
 
@@ -74,7 +75,7 @@ macOS 产物位于 `src-tauri/target/release/bundle/macos/` 和 `src-tauri/targe
 
 发布版本时：
 
-1. 同步 `package.json`、`package-lock.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock` 和 `src-tauri/tauri.conf.json` 中的应用版本，以及 README 的版本说明。
+1. 同步 `package.json`、`package-lock.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock` 和 `src-tauri/tauri.conf.json` 中的应用版本，以及 `README.md` 和 `README.zh-CN.md` 的版本说明。
 2. 将 `CHANGELOG.md` 中对应的未发布内容归档为实际版本与发布日期。
 3. 执行相关测试与构建，并在目标平台验收安装、编辑保存、导入导出、退出和卸载流程；卸载前备份测试数据。
 4. 复核第三方依赖与素材声明，再按分发需求配置签名；macOS 公开分发还需考虑公证。仓库不包含证书或发布凭据。

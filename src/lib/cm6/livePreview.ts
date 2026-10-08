@@ -29,6 +29,8 @@ import {
   type EditorToolbarTarget,
 } from "@/lib/editorToolbarTarget";
 
+import { alignmentMarkdown, alignmentBlocks, lineAlignment } from "./alignment";
+
 const hideMark = Decoration.replace({});
 
 const MARK_NODES = new Set([
@@ -857,6 +859,8 @@ class TableWidget extends WidgetType {
           if (command.type === "align") {
             cell.align = command.align;
             editor.dom.style.textAlign = command.align;
+            grid.querySelector<HTMLElement>(`[data-cell="${cellKey(selected.row, selected.col)}"]`)!.style.textAlign = command.align;
+            editor.requestMeasure();
           } else if (["bold", "italic", "underline", "strike", "highlight", "color", "clear", "paint"].includes(command.type)) {
             if (editor.state.selection.main.empty) {
               editor.dispatch({ selection: EditorSelection.range(0, editor.state.doc.length) });
@@ -865,6 +869,7 @@ class TableWidget extends WidgetType {
           } else return;
           clearPendingCommits();
           commit();
+          emitEditorFormatChanged(widget.activeTarget?.getFormatMarks() ?? {});
         },
         insertImage: () => {},
         insertCallout: () => {},
@@ -925,7 +930,7 @@ class TableWidget extends WidgetType {
                 EditorView.editable.of(!view.state.readOnly),
                 EditorView.contentAttributes.of(view.state.readOnly ? { role: "document", "aria-readonly": "true" } : {}),
                 EditorState.transactionFilter.of(tr => view.state.readOnly && tr.docChanged ? [] : tr),
-                markdown({ base: markdownLanguage, addKeymap: false }),
+                markdown({ base: markdownLanguage, extensions: [alignmentMarkdown], addKeymap: false }),
                 history(),
                 livePreviewExtension(null, null, true),
                 EditorView.lineWrapping,
@@ -2031,7 +2036,9 @@ function buildLivePreviewDecoInner(
           Decoration.replace({
             widget: new TableWidget(raw, node.from, parsedMeta.to, parsedMeta.meta),
             block: true,
-            inclusive: false,
+            // Own both boundaries so CodeMirror does not create editable
+            // empty lines at the start/end of the hidden Markdown table.
+            inclusive: true,
           }),
         );
         return false;
@@ -2387,43 +2394,26 @@ function buildLivePreviewDecoInner(
         );
       }
 
-      if (/^<div\s+align=["'](center|right)["'](?:\s+style=["'][^"']*["'])?>\s*$/i.test(raw.trim())) {
-        const align = raw.match(/^<div\s+align=["'](center|right)["']/i)?.[1];
-        if (align) {
-          push(
-            entries,
-            line.from,
-            line.from,
-            Decoration.line({ class: "cm-lp-align-boundary" }),
-          );
-          push(entries, line.from, line.to, hideMark);
-          let n = line.number + 1;
-          while (n <= state.doc.lines) {
-            const bodyLine = state.doc.line(n);
-            if (/^<\/div>\s*$/.test(bodyLine.text.trim())) break;
-            push(
-              entries,
-              bodyLine.from,
-              bodyLine.from,
-              Decoration.line({ class: `cm-lp-align-${align}` }),
-            );
-            n += 1;
-          }
-        }
-      }
-
-      if (/^<\/div>\s*$/.test(raw.trim())) {
-        push(
-          entries,
-          line.from,
-          line.from,
-          Decoration.line({ class: "cm-lp-align-boundary" }),
-        );
-        push(entries, line.from, line.to, hideMark);
-      }
     }
     if (line.number >= state.doc.lines) break;
     pos = line.to + 1;
+  }
+
+  if (!inlineOnly) {
+    const blocks = alignmentBlocks(state);
+    const boundaries = new Set(blocks.flatMap(block => [block.openLine, block.closeLine]));
+    for (const number of boundaries) {
+      const line = state.doc.line(number);
+      push(entries, line.from, line.from, Decoration.line({class: "cm-lp-align-boundary"}));
+      push(entries, line.from, line.to, hideMark);
+    }
+    for (let number = 1; number <= state.doc.lines; number++) {
+      if (boundaries.has(number)) continue;
+      const align = lineAlignment(blocks, number);
+      if (align === "left") continue;
+      const line = state.doc.line(number);
+      push(entries, line.from, line.from, Decoration.line({class: `cm-lp-align-${align}`}));
+    }
   }
 
   const widgets = entries.filter((entry) => entry.to > entry.from && entry.deco.spec.widget);

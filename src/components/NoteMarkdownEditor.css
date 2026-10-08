@@ -41,7 +41,7 @@
 }
 
 .mn-cm-editor
-  .cm-line:not(.cm-lp-heading-line):not(.cm-lp-list-item):not(
+  .cm-line:not(.cm-lp-heading-line):not(
     .cm-lp-task-item
   ):not(.cm-lp-codeblock-line):not(.cm-lp-quote):not(.cm-lp-callout):not(
     .cm-lp-table-meta-line
@@ -84,8 +84,8 @@
   max-width: var(--mn-note-content-max-width, 920px);
   /* Use padding (not margin) so the gap stays inside the widget box and
      doesn't create a dead zone that steals clicks from nearby headings. */
-  margin: 0.04em auto 0;
-  padding: 0 2px 2.05em;
+  margin: 0 auto;
+  padding: 0.04em 2px 2.05em;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -770,9 +770,11 @@
   font: inherit;
 }
 
-.mn-cm-editor .cm-lp-align-boundary {
+.mn-cm-editor .cm-line.cm-lp-align-boundary {
   line-height: 0;
   min-height: 0;
+  height: 0;
+  overflow: hidden;
   padding-top: 0;
   padding-bottom: 0;
 }

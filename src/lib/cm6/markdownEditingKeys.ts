@@ -1,6 +1,7 @@
 import { EditorSelection } from "@codemirror/state";
 import { EditorView, type KeyBinding } from "@codemirror/view";
-import { unwrapInlineFormats } from "@/lib/cm6/mdFormat";
+import { applyFormat, unwrapInlineFormats } from "@/lib/cm6/mdFormat";
+import { alignmentBlocks } from "./alignment";
 
 type ListLine = {
   indent: string;
@@ -22,6 +23,33 @@ const ATX_HEADING_PREFIX_RE = /^(\s*#{1,6}\s+)/;
 const LEADING_TITLE_RE = /^#\s+/;
 const BLOCKQUOTE_PREFIX_RE = /^(\s*>+\s*)/;
 const TAB_INSERT = "  ";
+
+function protectAlignmentBoundary(view: EditorView, backward: boolean) {
+  if (view.dom.closest('.is-source') || !view.state.selection.main.empty) return false;
+  const { head } = view.state.selection.main;
+  const line = view.state.doc.lineAt(head);
+  const blocks = alignmentBlocks(view.state);
+  const adjacent = blocks.find(block => backward
+    ? line.number === block.closeLine || (head === line.from && !!line.text && line.number === block.closeLine + 1)
+    : line.number === block.openLine || (head === line.to && !!line.text && line.number === block.openLine - 1));
+  if (adjacent) {
+    view.dispatch({selection: EditorSelection.cursor(backward ? adjacent.innerTo : adjacent.innerFrom)});
+    return true;
+  }
+  const boundary = blocks.find(block => line.number === block.openLine || line.number === block.closeLine);
+  if (boundary) {
+    view.dispatch({selection: EditorSelection.cursor(line.number === boundary.openLine ? boundary.innerFrom : boundary.innerTo)});
+    return true;
+  }
+  const touchesBoundary = blocks.some(block => backward
+    ? head === line.from && line.number === block.openLine + 1
+    : head === line.to && line.number === block.closeLine - 1);
+  if (!touchesBoundary) return false;
+  // Joining text to an invisible tag would turn the whole block into raw HTML.
+  // At this boundary, delete the paragraph's alignment before joining lines.
+  applyFormat(view, {type: 'align', align: 'left'});
+  return true;
+}
 
 type FenceBlock = {
   openLine: ReturnType<EditorView["state"]["doc"]["line"]>;
@@ -427,6 +455,7 @@ export const markdownEditingKeymap: readonly KeyBinding[] = [
   {
     key: "Backspace",
     run: (view) =>
+      protectAlignmentBoundary(view, true) ||
       clearEmptyFenceBlock(view) ||
       protectFenceBoundaryBackspace(view) ||
       clearEmptyListMarker(view) ||
@@ -435,6 +464,6 @@ export const markdownEditingKeymap: readonly KeyBinding[] = [
   },
   {
     key: "Delete",
-    run: (view) => clearEmptyFenceBlock(view) || protectFenceBoundaryDelete(view),
+    run: (view) => protectAlignmentBoundary(view, false) || clearEmptyFenceBlock(view) || protectFenceBoundaryDelete(view),
   },
 ];

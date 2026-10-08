@@ -7,6 +7,7 @@ import {
 import { renderKatexToHtml } from "@/lib/katexRender";
 import { looksLikeTableStart, parseMarkdownTable } from "@/lib/mdTable";
 import type { TableMeta } from "@/lib/cm6/livePreview";
+import { sourceAlignmentBlocks } from "@/lib/cm6/alignment";
 import { HighlightedCode } from "./HighlightedCode";
 
 const TABLE_META_LINE_RE = /^<!--\s*mn-table\s+.+?\s*-->\s*$/;
@@ -233,6 +234,7 @@ export function SimpleMarkdown({
   };
 }) {
   const lines = source.replace(/\r\n/g, "\n").split("\n");
+  const alignmentByLine = new Map(sourceAlignmentBlocks(lines.join('\n')).map(block => [block.openLine - 1, block]));
   const blocks: ReactNode[] = [];
   let i = 0;
   let key = 0;
@@ -255,32 +257,18 @@ export function SimpleMarkdown({
       continue;
     }
 
-    const alignOpen = /^<div\s+align=["'](left|center|right)["'](?:\s+style=["'][^"']*["'])?>\s*$/.exec(
-      line.trim(),
-    );
-    if (alignOpen) {
-      const align = alignOpen[1] as "left" | "center" | "right";
-      const body: string[] = [];
-      i += 1;
-      while (
-        i < lines.length &&
-        !/^<\/div>\s*$/.test(lines[i]!.trim())
-      ) {
-        body.push(lines[i]!);
-        i += 1;
-      }
-      if (i < lines.length && /^<\/div>\s*$/.test(lines[i]!.trim())) i += 1;
+    const alignBlock = alignmentByLine.get(i);
+    if (alignBlock) {
+      const { align } = alignBlock;
+      const body = lines.slice(i + 1, alignBlock.closeLine - 1).join('\n');
+      i = alignBlock.closeLine;
       blocks.push(
         <div
           key={`align-${key++}`}
           className={`mn-md-align is-${align}`}
           style={{ textAlign: align }}
         >
-          {body.map((l, idx) => (
-            <div key={idx}>
-              {renderInline(l, notePath, libraryRootPath)}
-            </div>
-          ))}
+          {body.trim() ? <SimpleMarkdown source={body} notePath={notePath} libraryRootPath={libraryRootPath} /> : <br />}
         </div>,
       );
       continue;
@@ -498,6 +486,7 @@ export function SimpleMarkdown({
     while (
       i < lines.length &&
       lines[i]!.trim() &&
+      !alignmentByLine.has(i) &&
       !/^(#{1,6})\s+/.test(lines[i]!) &&
       !/^[-*+]\s+/.test(lines[i]!) &&
       !/^\d+[.)]\s+/.test(lines[i]!) &&

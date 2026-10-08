@@ -50,7 +50,7 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
         maxWidth: "none",
         boxSizing: "border-box",
       },
-      ".cm-line:not(.cm-lp-heading-line):not(.cm-lp-list-item):not(.cm-lp-task-item):not(.cm-lp-codeblock-line):not(.cm-lp-quote):not(.cm-lp-callout):not(.cm-lp-table-meta-line):not(.cm-lp-align-boundary):not(.cm-lp-hr-line):not(:has(> br:only-child))":
+      ".cm-line:not(.cm-lp-heading-line):not(.cm-lp-task-item):not(.cm-lp-codeblock-line):not(.cm-lp-quote):not(.cm-lp-callout):not(.cm-lp-table-meta-line):not(.cm-lp-align-boundary):not(.cm-lp-hr-line):not(:has(> br:only-child))":
         {
           paddingBottom: "0.34em",
         },
@@ -485,8 +485,10 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
       ".cm-lp-table-wrap": {
         display: "block",
         width: "100%",
-        margin: "0.95em 0 1.15em",
-        padding: "10px 10px 10px 2px",
+        // Block widget height measurement excludes margins. Keep spacing
+        // inside the measured box so mouse coordinates below it stay correct.
+        margin: "0",
+        padding: "calc(10px + 0.95em) 10px calc(10px + 1.15em) 2px",
         boxSizing: "border-box",
         overflowX: "auto",
         fontFamily: "var(--mn-font-ui)",
@@ -925,6 +927,8 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
       ".cm-lp-align-boundary": {
         lineHeight: "0",
         minHeight: "0",
+        height: "0",
+        overflow: "hidden",
         paddingTop: "0",
         paddingBottom: "0",
       },

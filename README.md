@@ -1,51 +1,65 @@
 # MeteorNoteEditor
 
-一个简单的本地 Markdown 笔记本，专注于记录、整理和阅读。
+**English** | [简体中文](README.zh-CN.md)
 
-不需要注册账号或配置服务端。笔记以 Markdown 文件保存在自己的电脑上，可以按笔记本整理，也可以导出到其他工具。项目从 MeteorNote 独立提取，基于 React、TypeScript、CodeMirror 6 和 Tauri 2 构建，可独立运行。
+**Less fuss. Clean pages. Your notes, on your computer.**
 
-## 主要功能
+Tired of note apps packed with features you never use, but still want the clean document layout of Feishu (Lark) Docs? That is the idea behind MeteorNoteEditor: a simple local Markdown notebook that makes everyday writing look good without making it complicated.
 
-- **三种显示模式**：实时预览、阅读模式和 Markdown 源码模式。
-- **日常写作**：标题、列表、任务、引用、代码高亮、表格、图片和数学公式，配有工具栏与文档大纲。
-- **笔记整理**：多层笔记本、收藏、全文搜索、标签页、分屏与独立窗口。
-- **列表排序**：手动排序，按创建时间、更新时间或名称升序／降序；列表同时显示创建和更新时间。
-- **本地保存**：自动保存、历史版本、回收站、外部修改检测和草稿恢复。
-- **文件流转**：导入／导出 Markdown 与图片附件，备份／恢复完整笔记库；macOS 支持导出当前笔记为 PDF。
-- **舒适阅读**：浅色／深色外观、编辑器主题与字号设置。
+Open a note, write, and read it comfortably. Use Markdown or the editing toolbar, keep your files locally, and take them to another tool whenever you like. No account or server setup is required.
 
-项目希望保持小而清晰：围绕写笔记、读笔记和管理本地文件改进，不让使用笔记本变得复杂。
+<!-- Screenshots: save the main application screenshot as docs/screenshots/overview.png,
+then move the following image line outside this comment. Use the same image in both READMEs.
+![MeteorNoteEditor on macOS: notebook sidebar and a clean Markdown editing page](docs/screenshots/overview.png)
+See docs/screenshots/README.md for optional screenshots and capture guidance.
+-->
 
-## 显示模式
+## Why this notebook?
 
-| 模式 | 用途 |
+The focus is the page: readable text, useful formatting, and a quiet place to write. The Feishu reference is about that clean document experience. Markdown files and local storage keep the workflow straightforward.
+
+Development priorities are editing, reading, and keeping notes safe. Everyday improvements—accurate text selection, consistent spacing, reliable tables, and predictable saving—matter more here than adding another layer of features.
+
+## What you can do
+
+- **Write with clean formatting.** Headings, lists, tasks, quotes, code highlighting, tables, images, and math; use the toolbar or type Markdown directly.
+- **Choose how to see a note.** Live preview while writing, a read-only view for reading, or Markdown source for precise edits. Light and dark appearance, editor themes, and font size are adjustable.
+- **Find and organize your notes.** Notebooks, favorites, and full-text search; sort by creation time, modification time, or name in either direction, or keep a manual order. Tabs, split views, and separate windows let you refer to another note while writing.
+- **Keep your work locally.** Markdown files on your computer, with autosave, version history, trash, external change detection, and draft recovery.
+- **Move and share your writing.** Import or export Markdown with image attachments, back up and restore the full library, and export the current note as PDF on macOS.
+
+## Display modes
+
+| Mode | Purpose |
 | --- | --- |
-| 实时预览 | 边写边看排版效果，适合日常记录 |
-| 阅读 | 只读浏览，避免误改正文 |
-| 源码 | 直接编辑 Markdown 标记，便于精确调整内容 |
+| Live preview | See formatting as you type, suitable for everyday writing |
+| Reading | Browse without accidentally editing the document |
+| Source | Edit Markdown syntax directly for precise control |
 
-在笔记右上角的“更多”菜单中切换。支持常见 Markdown 内容；合并表格、图片裁剪、颜色和对齐等扩展在其他编辑器中可能显示不同，详见 [使用指南](docs/USER_GUIDE.md)。
+Switch modes from the More (更多) menu at the top right of a note. Common Markdown content is supported. Extensions such as merged table cells, image cropping, colors, and alignment may render differently in other editors. See the [user guide (Chinese)](docs/USER_GUIDE.md) for details.
 
-## 平台状态
+The application interface is currently in Simplified Chinese. Notes can contain English, Chinese, or a mixture of both; the README language does not change the application language.
 
-当前项目版本为 `0.1.0`，仍在完善中。
+## Platform status
 
-| 平台 | 当前状态 |
+The current project version is `0.1.0` and is still under development.
+
+| Platform | Status |
 | --- | --- |
-| macOS | 已进行本地开发与构建验证；构建配置要求 macOS 12.0 及以上，未逐一验证所有系统版本 |
-| Windows | 已加入兼容性处理、NSIS 安装包配置和构建工作流；尚未完成 Windows 实机验收 |
-| Linux | 尚未验证，未提供专用打包配置 |
+| macOS | Local development and build checks completed. The build configuration requires macOS 12.0 or later; not every OS version has been tested. |
+| Windows | Compatibility handling, NSIS packaging configuration, and a build workflow are included. Native Windows acceptance testing is still pending. |
+| Linux | Not verified; no dedicated packaging configuration is provided. |
 
-直接导出 PDF 目前仅支持 macOS。Windows 工作流的存在不代表构建已经通过；已执行的检查与限制见 [验证记录](docs/VERIFICATION.md)。
+Direct PDF export is currently available only on macOS. The presence of a Windows workflow does not mean its builds have passed. See the [verification notes (Chinese)](docs/VERIFICATION.md) for completed checks and limitations.
 
-## 从源码运行
+## Run from source
 
-需要 **Node.js 20**、npm、Rust stable，以及对应平台的 Tauri 开发依赖：
+Install **Node.js 20**, npm, stable Rust, and the Tauri prerequisites for your platform:
 
-- macOS：Xcode Command Line Tools。
-- Windows：Visual Studio Build Tools 的“使用 C++ 的桌面开发”工作负载、Windows SDK、WebView2 Runtime，以及 Rust MSVC 工具链。
+- macOS: Xcode Command Line Tools.
+- Windows: Visual Studio Build Tools with the Desktop development with C++ workload, Windows SDK, WebView2 Runtime, and the Rust MSVC toolchain.
 
-完整的平台准备步骤见 [Tauri 开发环境说明](https://v2.tauri.app/start/prerequisites/)。首次安装依赖需要网络。
+See the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for platform setup. The initial dependency installation requires an internet connection.
 
 ```sh
 git clone https://github.com/GowareT/MeteorNoteEditor.git
@@ -54,39 +68,44 @@ npm ci
 npm run tauri:dev
 ```
 
-这会打开桌面应用，并在修改代码后自动更新。使用 nvm 的开发者可先运行 `nvm use`，仓库已提供 `.nvmrc`。
+This opens the desktop application with hot reload. If you use nvm, run `nvm use` first; the repository includes an `.nvmrc` file.
 
-`npm run dev` 仅启动端口为 `5183` 的前端开发服务，不能作为完整的网页版笔记本使用；笔记文件读写依赖 Tauri 桌面环境。
+`npm run dev` starts only the frontend development server on port `5183`. It is not a complete browser version of the notebook: reading and writing note files requires the Tauri desktop environment.
 
-打包当前平台的应用：
+Build the application for your current platform:
 
 ```sh
 npm run tauri:build
 ```
 
-产物位于 `src-tauri/target/release/bundle/`。平台依赖、测试和发布准备见 [开发指南](docs/DEVELOPMENT.md)。
+Build artifacts are written to `src-tauri/target/release/bundle/`. See the [development guide (Chinese)](docs/DEVELOPMENT.md) for testing, packaging, and release preparation.
 
-## 笔记保存在哪里
+The project was extracted from MeteorNote and runs independently. It is built with React, TypeScript, CodeMirror 6, and Tauri 2.
 
-| 平台 | 默认笔记目录 |
+## Where notes are stored
+
+| Platform | Default notes directory |
 | --- | --- |
 | macOS | `~/Library/Application Support/MeteorNoteEditor/Notebooks` |
 | Windows | `%APPDATA%\MeteorNoteEditor\Notebooks` |
 
-每篇笔记以独立目录保存，包含 Markdown 正文、图片附件和历史版本。回收站位于 `Notebooks` 同级的 `Trash` 目录。设置中可打开本地存储位置。
+Each note has its own directory containing the Markdown document, image attachments, and version history. The `Trash` directory sits alongside `Notebooks`. You can open the local storage location from Settings (设置).
 
-**迁移到其他 Markdown 工具**可使用 Markdown 导出；**保存完整笔记库**请使用 `.mnebackup` 备份，包含附件、历史版本和回收站。备份不包含外观偏好，且未加密。具体范围与恢复方式见 [数据管理说明](docs/USER_GUIDE.md#导入导出与备份)。
+Use **Markdown export** to move notes to other Markdown tools. Use a **`.mnebackup` backup** to preserve the full library, including attachments, history, and trash. Backups do not include appearance preferences and are not encrypted. See [import, export, and backup (Chinese)](docs/USER_GUIDE.md#导入导出与备份) for details.
 
-## 文档与参与
+## Documentation and contributing
 
-- [使用指南](docs/USER_GUIDE.md)：编辑、排序、保存、导入导出与常见问题。
-- [开发指南](docs/DEVELOPMENT.md)：环境准备、项目结构、测试与打包。
-- [贡献指南](CONTRIBUTING.md)：报告问题、讨论改进与提交代码。
-- [更新记录](CHANGELOG.md)：尚未发布的变更。
-- [安全说明](SECURITY.md)：数据边界与漏洞反馈。
+The following documents are currently available in Chinese:
 
-遇到问题可以 [提交 Issue](https://github.com/GowareT/MeteorNoteEditor/issues)，请附上系统版本、复现步骤和不含隐私的最小示例。
+- [User guide](docs/USER_GUIDE.md): editing, sorting, saving, import/export, and common questions.
+- [Development guide](docs/DEVELOPMENT.md): setup, project structure, tests, and packaging.
+- [Contributing guide](CONTRIBUTING.md): reporting bugs, discussing improvements, and submitting changes.
+- [Screenshot guide](docs/screenshots/README.md): where to put application screenshots and how to display them in both READMEs.
+- [Changelog](CHANGELOG.md): unreleased changes.
+- [Security policy](SECURITY.md): data boundaries and vulnerability reporting.
 
-## 许可证
+To report a problem, [open an issue](https://github.com/GowareT/MeteorNoteEditor/issues) with your OS version, steps to reproduce, and a minimal example without personal data.
 
-项目采用 [MIT 许可证](LICENSE)。第三方依赖和素材遵循各自的许可证，详见 [第三方声明](THIRD_PARTY_NOTICES.md)。
+## License
+
+Licensed under the [MIT License](LICENSE). Third-party dependencies and assets retain their respective licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
