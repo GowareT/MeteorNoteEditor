@@ -1,0 +1,2 @@
+# Embedded starter notes must have the same line endings on every build host.
+src-tauri/default-notes/*.md text eol=lf

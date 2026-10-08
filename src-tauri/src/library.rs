@@ -81,7 +81,8 @@ mod deletion_tests {
                 if path.is_dir() { verify(&path, count); }
                 else if path.extension().is_some_and(|ext| ext == "md") {
                     let body = fs::read_to_string(&path).unwrap();
-                    assert!(body.starts_with(&format!("# {}\n", path.file_stem().unwrap().to_string_lossy())));
+                    assert!(body.starts_with(&format!("# {}\n", path.file_stem().unwrap().to_string_lossy())), "Unexpected example heading: {}", path.display());
+                    assert!(!body.contains('\r'), "Example must use LF line endings: {}", path.display());
                     assert!(body.chars().count() > 200);
                     *count += 1;
                 }
@@ -296,7 +297,10 @@ fn seed_defaults(root: &Path) -> LibraryResult<()> {
         }
         let pkg = nb_dir.join(note_title);
         fs::create_dir_all(&pkg)?;
-        crate::storage::atomic_write(pkg.join(format!("{note_title}.md")), body)?;
+        // include_str! preserves checkout line endings, including CRLF on Windows.
+        // Normalize only bundled examples; existing user notes are never rewritten.
+        let body = body.replace("\r\n", "\n").replace('\r', "\n");
+        crate::storage::atomic_write(pkg.join(format!("{note_title}.md")), &body)?;
         ensure_note_package(&pkg)?;
         let mut order = read_order(&nb_dir);
         append_order_item(&mut order.notes, note_title);
