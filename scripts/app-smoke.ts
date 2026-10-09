@@ -10,7 +10,6 @@ mockIPC((command,payload) => {
   const args=payload as Record<string,string>;
   switch(command) {
     case 'list_notebooks': return structuredClone(notebooks);
-    case 'library_stats': return {noteCount:notebooks[0].notes.length,notebookCount:1,trashCount:trash.length};
     case 'library_root_path': return '/test-fixture/MeteorNoteEditor/Notebooks';
     case 'read_note': return bodies.get(args.path) ?? '# 恢复测试\n\n恢复的正文\n';
     case 'write_note': bodies.set(args.path,args.content);return;

@@ -15,7 +15,7 @@ globalThis.__deletionTestApi = {
   },
   moveNoteToTrash: async (path) => calls.push(["trash", path]),
   loadLibrary: async () => [],
-  libraryStats: async () => ({ trashCount: 1 }),
+  listTrash: async () => [{ id: "trash" }],
   readNote: async () => "surviving draft",
 };
 const result = await build({

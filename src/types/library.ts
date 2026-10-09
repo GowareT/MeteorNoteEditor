@@ -29,11 +29,6 @@ export interface LibraryTrashItem {
     trashedAt: string;
     createdAt?: string | null;
 }
-export interface LibraryStats {
-    notebookCount: number;
-    noteCount: number;
-    trashCount: number;
-}
 export interface NoteVersionInfo {
     id: string;
     createdAt: string;

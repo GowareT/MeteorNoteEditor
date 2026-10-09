@@ -104,7 +104,7 @@ The sample note library lives in memory and resets when the page reloads. Some p
 
 Each note has its own directory containing the Markdown document, image attachments, and version history. The `Trash` directory sits alongside `Notebooks`. You can open the local storage location from Settings (设置).
 
-Use **Markdown export** to move notes to other Markdown tools. Use a **`.mnebackup` backup** to preserve the full library, including attachments, history, and trash. Backups do not include appearance preferences and are not encrypted. See [import, export, and backup (Chinese)](docs/USER_GUIDE.md#导入导出与备份) for details.
+Use **Markdown export** to save the current note with its images for other Markdown tools. Use a **`.mnebackup` backup** to preserve the full library, including attachments, history, and trash. Backups do not include appearance preferences and are not encrypted. See [import, export, and backup (Chinese)](docs/USER_GUIDE.md#导入导出与备份) for details.
 
 ## Documentation and contributing
 

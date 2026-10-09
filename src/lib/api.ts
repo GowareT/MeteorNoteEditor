@@ -2,7 +2,7 @@ import { t } from "@/lib/i18n";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { DocumentSessions, type DocumentSession, type PathChange } from "./documentSessions";
-import type { LibraryNotebook, LibraryStats, LibraryTrashItem } from "@/types/library";
+import type { LibraryNotebook, LibraryTrashItem } from "@/types/library";
 export type { PathChange } from "./documentSessions";
 let cachedLibraryRootPath: string | null = null;
 const recoveryKey = `meteornote-editor.drafts.${typeof window !== "undefined" && isTauri() ? getCurrentWindow().label : "main"}`;
@@ -117,9 +117,6 @@ export async function permanentlyDeleteTrashItem(id: string): Promise<void> {
 export async function emptyTrash(): Promise<void> {
     await invoke("empty_trash");
 }
-export async function libraryStats(): Promise<LibraryStats> {
-    return invoke<LibraryStats>("library_stats");
-}
 export async function libraryRootPath(): Promise<string> {
     cachedLibraryRootPath = await invoke<string>("library_root_path");
     return cachedLibraryRootPath;
@@ -147,7 +144,7 @@ export async function searchNotes(query: string): Promise<SearchHit[]> {
     }
     return [...results.values()].slice(0, 500);
 }
-export async function transferLibrary(operation: "import" | "export" | "export-note" | "backup" | "restore", paths: string[], targetNotebookPath?: string): Promise<TransferResult> {
+export async function transferLibrary(operation: "import" | "export-note" | "backup" | "restore", paths: string[], targetNotebookPath?: string): Promise<TransferResult> {
     await flushDrafts();
     return invoke("transfer_library", { operation, paths, targetNotebookPath: targetNotebookPath ?? null });
 }

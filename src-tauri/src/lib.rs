@@ -361,11 +361,6 @@ fn empty_trash() -> Result<(), LibraryError> {
     library::empty_trash()
 }
 
-#[tauri::command]
-fn library_stats() -> Result<LibraryStats, LibraryError> {
-    let _guard = storage::lock()?;
-    library::library_stats()
-}
 
 #[tauri::command]
 fn library_root_path() -> Result<String, LibraryError> {
@@ -385,7 +380,6 @@ async fn transfer_library(operation: String, paths: Vec<String>, target_notebook
         let first = paths.first().ok_or_else(|| LibraryError::Message("未选择文件或目录".into()))?;
         match operation.as_str() {
             "import" => transfer::import_markdown(paths, target_notebook_path.as_deref().ok_or_else(|| LibraryError::Message("请先打开要导入到的笔记本".into()))?),
-            "export" => transfer::export_markdown(first),
             "export-note" => transfer::export_note(first, paths.get(1).ok_or_else(|| LibraryError::Message("未选择笔记".into()))?),
             "backup" => transfer::backup(first),
             "restore" => transfer::restore(first),
@@ -442,7 +436,6 @@ pub fn run() {
             restore_trash_item,
             permanently_delete_trash_item,
             empty_trash,
-            library_stats,
             library_root_path,
         ])
         .setup(|app| {

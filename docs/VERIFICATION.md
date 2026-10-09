@@ -55,3 +55,20 @@
 - Chromium 和 macOS 独立 WKWebView 检查通过；WebKit 检查包括宽窗口/小字号、窄窗口/大字号，以及源码模式。使用合成鼠标事件验证坐标和选区，另在浏览器中通过真实鼠标拖动复核行旁空白的跨行选择。
 - 项目回归脚本、生产构建、732 项格式检查和 35 项编辑交互检查通过。
 - 原生应用窗口尚未进行人工鼠标验收；上述 WKWebView 测试使用内存文档，不访问用户笔记。
+
+## 内存与后台开销优化（2026-10-09）
+
+- 关闭笔记标签后清理已保存正文缓存，保留打开中的笔记、未保存草稿、保存队列和错误/冲突内容。模拟 200 篇缓存笔记的回归中，清理后保留 2 篇打开中的笔记及 1 篇草稿；覆盖重新读取、保存中关闭和过期读取保护。
+- 后台刷新由两次笔记库扫描减少为一次；内容未变时复用原对象，避免文档树和笔记列表无意义刷新。窗口隐藏时暂停轮询，恢复可见或获得焦点时检查。
+- 底部时钟独立更新，避免每秒重新渲染整个编辑视图。表格共用语法配置，同时保留每个单元格独立的文档、选区和撤销历史。
+- 公式渲染器按需加载。生产主脚本由 1,541.54 kB 减至 1,279.69 kB（约 17%），另有按需加载的 260.72 kB 公式模块；这不是整个安装包或实际内存下降比例。
+- 清理不再使用的全库导出实现、重复统计接口、未引用的窗口 Hook 和 `codemirror` 总包依赖；保留实际使用的 `@codemirror/*` 模块，并更新第三方许可记录。
+- 前端回归与生产构建、24 项 Rust 测试通过；浏览器中 38 项编辑交互、85 项表格/列表布局、6 组阅读一致性检查通过，公式按需加载显示正常。未进行正式版长时间内存压力测试，不宣称固定的内存降幅。
+
+### 2026-10-09 — Click offset after callouts
+
+- Reproduced the reported list-item clicks with a callout and an inline formula above them. At 15 px font size, each callout's vertical margins shifted the rendered lines approximately 21 px below CodeMirror's height map; two callouts accumulated approximately 42 px. Clicking the middle/bottom of the first list item selected the second.
+- Replaced callout margins with transparent borders included in measured line height. Padding-box backgrounds and adjusted corner radii retain the visible spacing and rounded callout background. Mouse selection handling is unchanged.
+- Fixture: `scripts/click-offset-regression.html` (button or `?autorun`; optional `font` and `width`). Checks actual DOM/height-map agreement, the reported Chinese text, single/multiline callouts, clicks at several vertical positions, forward/backward dragging, Shift-click, double-click and unchanged document content.
+- macOS WKWebView: before the fix, 18 of the initial 24 click checks failed; afterward all 32 expanded checks passed at 15 px / 940 px width and 20 px / 520 px width. DOM and measured line boundaries agree after both callouts.
+- Frontend tests and production build passed. Existing bundle-size advisory remains.

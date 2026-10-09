@@ -75,11 +75,24 @@ export class DocumentSessions {
     try {
       const base = session.base;
       const content = await this.transport.read(path);
-      if (session.path !== path || session.saving || session.base !== base || content === base) return;
+      if (this.documents.get(path) !== session || session.path !== path || session.saving || session.base !== base || content === base) return;
       if (session.draft === base) { session.base = content; session.draft = content; session.error = undefined; }
       else { session.external = content; session.error = "CONFLICT: 检测到外部修改，你的编辑仍保留在草稿中"; }
       this.changed();
-    } catch (error) { if (session.path === path) { session.error = `无法读取笔记：${String(error)}`; this.changed(); } }
+    } catch (error) { if (this.documents.get(path) === session && session.path === path) { session.error = `无法读取笔记：${String(error)}`; this.changed(); } }
+  }
+  /** Release closed, saved documents only. Failed/queued saves and conflicts stay recoverable. */
+  pruneClosed(openPaths: ReadonlySet<string>) {
+    let removed = 0;
+    for (const [path, session] of this.documents) {
+      if (!openPaths.has(path) && session.base === session.draft && !session.saving &&
+          !session.error && session.external === undefined && !this.queues.has(path)) {
+        this.documents.delete(path);
+        removed++;
+      }
+    }
+    if (removed) this.changed();
+    return removed;
   }
   async useDisk(path: string) {
     const pending = this.queues.get(path);

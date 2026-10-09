@@ -31,7 +31,7 @@ const result = await build({
   } }],
 });
 const { chooseLibraryTransfer: run } = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString("base64")}`);
-for (const kind of ["files", "folder", "export", "export-note", "pdf", "backup", "restore"]) {
+for (const kind of ["files", "folder", "export-note", "pdf", "backup", "restore"]) {
   assert.equal(await run(kind, "Book/Note", "Book/Child"), null);
 }
 assert.equal(calls.length, 0);
@@ -59,8 +59,6 @@ await run("pdf", "Book/Note");
 assert.deepEqual(options.filters, [{ name: "PDF", extensions: ["pdf"] }]);
 assert.equal(options.defaultPath, "Note.pdf");
 assert.deepEqual(calls.pop(), { operation: "pdf", paths: ["Book/Note", `${selection}.pdf`] });
-await run("export");
-assert.deepEqual(calls.pop(), { operation: "export", paths: [selection] });
 await run("backup");
 assert.deepEqual(options.filters[0].extensions, ["mnebackup"]);
 assert.equal(calls.pop().operation, "backup");
@@ -70,11 +68,12 @@ globalThis.confirm = () => true;
 await run("restore");
 assert.equal(calls.pop().operation, "restore");
 failure = new Error("保存失败");
-await assert.rejects(() => run("export"), /保存失败/);
+await assert.rejects(() => run("export-note", "Book/Note"), /保存失败/);
 const view = await readFile("src/views/NoteEditorView.tsx", "utf8");
 const more = view.slice(view.indexOf("const moreItems ="), view.indexOf("const outlineMenuItems ="));
 assert.ok(!more.includes('label: t("插入")'));
-for (const id of ["export-note", "export-pdf", "export-all"]) assert.ok(more.includes(`id: "${id}"`));
+for (const id of ["export-note", "export-pdf"]) assert.ok(more.includes(`id: "${id}"`));
+assert.ok(!more.includes('id: "export-all"'));
 assert.ok(!more.includes('id: "import"'));
 const notebookView = await readFile("src/views/NotebookView.tsx", "utf8");
 for (const id of ["import-files", "import-folder"]) assert.ok(notebookView.includes(`id: "${id}"`));

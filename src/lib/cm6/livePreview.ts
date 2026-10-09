@@ -931,10 +931,7 @@ class TableWidget extends WidgetType {
                 EditorView.editable.of(!view.state.readOnly),
                 EditorView.contentAttributes.of(view.state.readOnly ? { role: "document", "aria-readonly": "true" } : {}),
                 EditorState.transactionFilter.of(tr => view.state.readOnly && tr.docChanged ? [] : tr),
-                markdown({ base: markdownLanguage, extensions: [alignmentMarkdown], addKeymap: false }),
-                history(),
-                livePreviewExtension(null, null, true),
-                EditorView.lineWrapping,
+                tableCellBaseExtensions,
                 keymap.of([
                   ...(["bold", "italic", "underline", "strike"] as const).map((type, index) => ({
                     key: ["Mod-b", "Mod-i", "Mod-u", "Mod-Shift-x"][index],
@@ -2462,3 +2459,11 @@ export function livePreviewExtension(
     ],
   });
 }
+
+// Share immutable configuration; each cell still owns its document, selection and undo history.
+const tableCellBaseExtensions = [
+  markdown({ base: markdownLanguage, extensions: [alignmentMarkdown], addKeymap: false }),
+  history(),
+  livePreviewExtension(null, null, true),
+  EditorView.lineWrapping,
+];

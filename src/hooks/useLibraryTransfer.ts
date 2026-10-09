@@ -1,5 +1,5 @@
 import { t, errorMessage } from "@/lib/i18n";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { chooseLibraryTransfer, type TransferKind } from "@/lib/libraryTransfer";
 import { useAppStore } from "@/store/appStore";
 
@@ -8,6 +8,11 @@ export function useLibraryTransfer(notePath?: string, targetNotebookPath?: strin
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  useEffect(() => {
+    if (!message || busy) return;
+    const timer = window.setTimeout(() => setMessage(""), 5000);
+    return () => window.clearTimeout(timer);
+  }, [message, busy]);
   const run = useCallback(async (kind: TransferKind, importTarget = targetNotebookPath) => {
     if (running.current) return;
     running.current = true;

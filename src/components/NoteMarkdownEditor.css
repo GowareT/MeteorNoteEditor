@@ -553,21 +553,20 @@
 }
 
 .mn-cm-editor .cm-line.cm-lp-callout-first {
-  margin-top: 0.58em;
+  /* Include spacing in the measured line box; margins offset all later clicks. */
+  border-top: 0.58em solid transparent;
+  background-clip: padding-box;
   padding-top: 0.58em;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  border-top-left-radius: 6px calc(6px + 0.58em);
+  border-top-right-radius: 6px calc(6px + 0.58em);
 }
 
 .mn-cm-editor .cm-line.cm-lp-callout-last {
-  margin-bottom: 0.82em;
+  border-bottom: 0.82em solid transparent;
+  background-clip: padding-box;
   padding-bottom: 0.58em;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-}
-
-.mn-cm-editor .cm-line.cm-lp-callout-first.cm-lp-callout-last {
-  border-radius: 6px;
+  border-bottom-left-radius: 6px calc(6px + 0.82em);
+  border-bottom-right-radius: 6px calc(6px + 0.82em);
 }
 
 .mn-cm-editor .cm-lp-callout-head-widget {

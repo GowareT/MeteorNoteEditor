@@ -848,6 +848,7 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
         minHeight: "1.72em",
         padding: "0.18em 0.9em 0.18em 2.8em",
         background: "var(--mn-callout-bg)",
+        backgroundClip: "padding-box",
         borderRadius: "0",
         fontStyle: "normal",
         lineHeight: "1.72",
@@ -859,19 +860,18 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
         paddingLeft: "2.8em",
       },
       ".cm-lp-callout-first": {
-        marginTop: "0.58em",
+        // Line margins are excluded from CodeMirror's height map. Transparent
+        // borders preserve the visual gap while keeping hit-testing in sync.
+        borderTop: "0.58em solid transparent",
         paddingTop: "0.58em",
-        borderTopLeftRadius: "6px",
-        borderTopRightRadius: "6px",
+        borderTopLeftRadius: "6px calc(6px + 0.58em)",
+        borderTopRightRadius: "6px calc(6px + 0.58em)",
       },
       ".cm-lp-callout-last": {
-        marginBottom: "0.82em",
+        borderBottom: "0.82em solid transparent",
         paddingBottom: "0.58em",
-        borderBottomLeftRadius: "6px",
-        borderBottomRightRadius: "6px",
-      },
-      ".cm-lp-callout-first.cm-lp-callout-last": {
-        borderRadius: "6px",
+        borderBottomLeftRadius: "6px calc(6px + 0.82em)",
+        borderBottomRightRadius: "6px calc(6px + 0.82em)",
       },
       ".cm-lp-callout-head-widget": {
         position: "absolute",

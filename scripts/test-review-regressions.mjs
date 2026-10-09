@@ -23,7 +23,7 @@ const copies = [];
 let failCopy = false;
 globalThis.__reviewInvoke = async (command, args) => {
   if (command === "list_notebooks") return [];
-  if (command === "library_stats") return { trashCount: 0 };
+  if (command === "list_trash") return [];
   if (command === "write_note") {
     assert.equal(disk.get(args.path), args.expectedContent);
     disk.set(args.path, args.content);

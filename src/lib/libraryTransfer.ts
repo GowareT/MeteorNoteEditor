@@ -3,7 +3,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import * as api from "@/lib/api";
 import { supportsNativePdf } from "./platform";
 
-export type TransferKind = "files" | "folder" | "export" | "export-note" | "pdf" | "backup" | "restore";
+export type TransferKind = "files" | "folder" | "export-note" | "pdf" | "backup" | "restore";
 
 export async function chooseLibraryTransfer(kind: TransferKind, notePath?: string, targetNotebookPath?: string) {
   const importing = kind === "files" || kind === "folder";
@@ -28,8 +28,8 @@ export async function chooseLibraryTransfer(kind: TransferKind, notePath?: strin
     paths = Array.isArray(selected) ? selected : [selected];
   } else {
     const selected = await save({
-      title: kind === "backup" ? t("备份笔记库") : kind === "export-note" ? t("导出当前笔记为 Markdown 文件夹（含图片）") : t("导出全部笔记为 Markdown 文件夹（含图片）"),
-      defaultPath: kind === "backup" ? `MeteorNoteEditor-${timestamp}.mnebackup` : kind === "export-note" ? `${notePath!.split("/").pop()}-${timestamp}` : `Markdown-${timestamp}`,
+      title: kind === "backup" ? t("备份笔记库") : t("导出当前笔记为 Markdown 文件夹（含图片）"),
+      defaultPath: kind === "backup" ? `MeteorNoteEditor-${timestamp}.mnebackup` : `${notePath!.split("/").pop()}-${timestamp}`,
       filters: kind === "backup" ? [{ name: t("MeteorNoteEditor 备份"), extensions: ["mnebackup"] }] : undefined,
     });
     if (!selected) return null;

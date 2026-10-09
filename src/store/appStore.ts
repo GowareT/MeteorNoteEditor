@@ -2,6 +2,7 @@ import { t, errorMessage } from "@/lib/i18n";
 import { create } from "zustand";
 import type { LibraryNotebook, LibraryNote, SidebarPage } from "@/types/library";
 import * as api from "@/lib/api";
+import { reconcileNotebooks } from "@/lib/librarySnapshot";
 
 export const SIDEBAR_WIDTH_DEFAULT = 240;
 export const SIDEBAR_WIDTH_MIN = 200;
@@ -382,10 +383,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const notebooks = await api.loadLibrary();
-      const stats = await api.libraryStats();
+      const trash = await api.listTrash();
       set({
         notebooks,
-        trashCount: stats.trashCount,
+        trashCount: trash.length,
         expandedNotebooks: new Set(notebooks.map((n) => n.id)),
         loading: false,
       });
@@ -1052,8 +1053,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   refresh: async () => {
     const notebooks = await api.loadLibrary();
-    const stats = await api.libraryStats();
-    set({ notebooks, trashCount: stats.trashCount });
+    const trash = await api.listTrash();
+    const state = get();
+    const shared = reconcileNotebooks(state.notebooks, notebooks);
+    if (shared !== state.notebooks || trash.length !== state.trashCount)
+      set({ notebooks: shared, trashCount: trash.length });
   },
 
   clearError: () => set({ error: null }),

@@ -168,6 +168,16 @@ function useEditorChrome() {
         background: editorThemeBackground(theme, dark) ?? undefined,
     };
 }
+// Updating the clock must not rerender the editor and toolbar every second.
+function StatusClock() {
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const id = window.setInterval(() => setNow(Date.now()), 1000);
+        return () => window.clearInterval(id);
+    }, []);
+    return <span>{t("当前：{0}", formatStatusTime(now))}</span>;
+}
+
 export function NoteEditorView({ path, detached = false, }: {
     path: string;
     /** 分屏等场景：本地读写，避免两屏共用一份 draft */
@@ -219,7 +229,6 @@ export function NoteEditorView({ path, detached = false, }: {
             cancelled = true;
         };
     }, []);
-    const [clockNow, setClockNow] = useState<number>(() => Date.now());
     const outlinePanel = useResizablePanelWidth(OUTLINE_WIDTH_KEY, OUTLINE_WIDTH_DEFAULT, {
         min: OUTLINE_WIDTH_MIN,
         max: OUTLINE_WIDTH_MAX,
@@ -271,10 +280,6 @@ export function NoteEditorView({ path, detached = false, }: {
         }
         return map;
     }, [outlineHeadings]);
-    useEffect(() => {
-        const id = window.setInterval(() => setClockNow(Date.now()), 1000);
-        return () => window.clearInterval(id);
-    }, []);
     const toggleOutlineOpen = useCallback(() => {
         setOutlineOpen((prev) => !prev);
     }, []);
@@ -537,7 +542,6 @@ export function NoteEditorView({ path, detached = false, }: {
                 submenu: [
                     { id: "export-note", label: t("当前笔记（Markdown）…"), description: t("保存正文和图片到文件夹，可继续编辑"), onSelect: () => void transfer.run("export-note") },
                     { id: "export-pdf", label: t("当前笔记（PDF）…"), description: supportsNativePdf() ? t("保存排版后的文档，适合分享和打印") : t("保存排版后的文档，仅 macOS 支持"), disabled: !supportsNativePdf(), onSelect: () => void transfer.run("pdf") },
-                    { id: "export-all", label: t("全部笔记（Markdown）…"), description: t("导出所有笔记本，保留目录和图片"), onSelect: () => void transfer.run("export") },
                 ],
             },
             { id: "sep-transfer", label: "", separator: true },
@@ -700,7 +704,7 @@ export function NoteEditorView({ path, detached = false, }: {
           <strong>{formatDocumentPath(path)}</strong>
         </div>
         <div className="mn-note-statusbar__meta">
-          <span>{t("当前：{0}", formatStatusTime(clockNow))}</span>
+          <StatusClock />
           <span>{t("最近保存：{0}", formatStatusTime(lastSavedAt))}</span>
         </div>
         <div className="mn-note-statusbar__sync">

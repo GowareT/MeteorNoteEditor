@@ -23,10 +23,23 @@ export function DocumentSafety() {
       }).catch(error => { if (!disposed) setError(errorMessage(error)); });
     }) : Promise.resolve(() => {});
     let polling = false;
+    const pruneClosed = () => {
+      const state = useAppStore.getState();
+      const paths = new Set<string>();
+      for (const page of [...state.tabs.map(tab => tab.page), state.selected])
+        if (typeof page === "object" && "note" in page) paths.add(page.note);
+      if (state.notePath) paths.add(state.notePath);
+      api.documents.pruneClosed(paths);
+    };
+    const unsubscribeStore = useAppStore.subscribe((state, previous) => {
+      if (state.tabs !== previous.tabs || state.selected !== previous.selected || state.notePath !== previous.notePath)
+        pruneClosed();
+    });
     const poll = async () => {
-      if (polling || disposed) return;
+      if (polling || disposed || document.hidden) return;
       polling = true;
       try {
+        pruneClosed();
         for (const path of api.documents.documents.keys()) await api.documents.checkExternal(path);
         await useAppStore.getState().refresh();
       } catch (error) { setError(errorMessage(error)); }
@@ -34,6 +47,7 @@ export function DocumentSafety() {
     };
     const interval = window.setInterval(() => void poll(), 2500);
     window.addEventListener("focus", poll);
+    document.addEventListener("visibilitychange", poll);
     const blockEditing = (event: Event) => { if (locked.current) { event.preventDefault(); event.stopImmediatePropagation(); } };
     for (const name of ["keydown", "beforeinput", "paste", "drop", "pointerdown"]) window.addEventListener(name, blockEditing, true);
     const cancel = isTauri() ? listen("mne-close-cancelled", () => { locked.current = false; setClosing(false); }) : Promise.resolve(() => {});
@@ -56,6 +70,8 @@ export function DocumentSafety() {
       disposed = true;
       clearInterval(interval);
       window.removeEventListener("focus", poll);
+      document.removeEventListener("visibilitychange", poll);
+      unsubscribeStore();
       for (const name of ["keydown", "beforeinput", "paste", "drop", "pointerdown"]) window.removeEventListener(name, blockEditing, true);
       void unsubscribe.then(unlisten => unlisten());
       void cancel.then(unlisten => unlisten());

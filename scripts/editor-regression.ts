@@ -10,7 +10,8 @@ import { SimpleMarkdown } from '../src/components/SimpleMarkdown';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
 import { meteorNoteEditorTheme } from '../src/lib/cm6/theme';
-import { defaultKeymap } from '@codemirror/commands';
+import { defaultKeymap, undo } from '@codemirror/commands';
+import { language } from '@codemirror/language';
 import { alignmentMarkdown } from '../src/lib/cm6/alignment';
 import { markdownEditingKeymap } from '../src/lib/cm6/markdownEditingKeys';
 import '../src/components/NoteMarkdownEditor.css';
@@ -293,6 +294,19 @@ document.querySelector('#interactions')!.addEventListener('click',async()=>{
     inner.contentDOM.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
     await tick();
     expect(!view.dom.querySelector('.cm-lp-table-wrap')!.contains(document.activeElement),'Enter exits to normal paragraph');
+    const independent=create('| A | B |\n| --- | --- |\n| 甲 | 乙 |');
+    const independentHost=independent.dom.parentElement!;
+    try {
+      const cells=Array.from(independent.dom.querySelectorAll('.cm-lp-cell-editor .cm-content')).map(el=>EditorView.findFromDOM(el)!);
+      expect(new Set(cells.map(editor=>editor.state.facet(language))).size===1,'table cells reuse one language configuration');
+      const left=cells[2],right=cells[3];
+      left.dispatch({changes:{from:0,to:left.state.doc.length,insert:'左侧修改'}});
+      right.dispatch({changes:{from:0,to:right.state.doc.length,insert:'右侧修改'}});
+      undo(left);
+      expect(left.state.doc.toString()==='甲'&&right.state.doc.toString()==='右侧修改','shared configuration keeps undo independent');
+      undo(right);
+      expect(right.state.doc.toString()==='乙','each cell retains its own undo history');
+    } finally {independent.destroy();independentHost.remove();}
     const quote=create('> 引用中间的文字');
     quote.dom.scrollIntoView(); await tick();
     const word=quote.state.doc.toString().indexOf('中间');

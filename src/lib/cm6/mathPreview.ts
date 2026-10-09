@@ -10,8 +10,9 @@ import {
   EditorView,
   WidgetType,
 } from "@codemirror/view";
-import katex from "katex";
 import "katex/dist/katex.min.css";
+
+let katexModule: Promise<typeof import("katex")> | undefined;
 
 type MathSpan = {
   from: number;
@@ -32,20 +33,21 @@ class MathWidget extends WidgetType {
     return this.tex === other.tex && this.display === other.display;
   }
 
-  toDOM() {
+  toDOM(view: EditorView) {
     const el = document.createElement(this.display ? "div" : "span");
     el.className = this.display ? "cm-lp-math-block" : "cm-lp-math-inline";
     el.setAttribute("contenteditable", "false");
-    try {
-      katex.render(this.tex, el, {
-        throwOnError: false,
-        displayMode: this.display,
-        strict: "ignore",
-      });
-    } catch {
-      el.textContent = this.display ? `$$${this.tex}$$` : `$${this.tex}$`;
+    el.textContent = this.display ? `$$${this.tex}$$` : `$${this.tex}$`;
+    // Ordinary notes do not need to load or initialize the formula renderer.
+    const loading = katexModule ??= import("katex");
+    void loading.then(({ default: katex }) => {
+      if (!el.isConnected) return;
+      katex.render(this.tex, el, { throwOnError: false, displayMode: this.display, strict: "ignore" });
+      view.requestMeasure();
+    }).catch(() => {
+      if (katexModule === loading) katexModule = undefined;
       el.classList.add("is-error");
-    }
+    });
     return el;
   }
 
@@ -140,6 +142,7 @@ function buildMathDeco(state: EditorState): DecorationSet {
   try {
     const sel = state.selection.main;
     const text = state.doc.toString();
+    if (!text.includes("$")) return Decoration.none;
     const code = codeRanges(state);
     const spans = findMathSpans(text, code);
     const builder = new RangeSetBuilder<Decoration>();

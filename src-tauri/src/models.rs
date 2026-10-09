@@ -44,14 +44,6 @@ pub struct LibraryTrashItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LibraryStats {
-    pub notebook_count: usize,
-    pub note_count: usize,
-    pub trash_count: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub(crate) struct TrashMeta {
     pub id: String,
     pub kind: String,

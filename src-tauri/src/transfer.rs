@@ -298,30 +298,6 @@ pub fn import_markdown(sources: Vec<String>, target_notebook: &str) -> LibraryRe
     Ok(TransferResult { path: target_notebook.into(), note_count: files.len() })
 }
 
-fn export_notebook(source: &Path, target: &Path, size: &mut u64, count: &mut usize) -> LibraryResult<()> {
-    fs::create_dir_all(target)?;
-    for entry in fs::read_dir(source)? {
-        let source = entry?.path();
-        if !regular(&source)?.is_dir() { continue; }
-        let name = source.file_name().unwrap();
-        let markdown = source.join(format!("{}.md", name.to_string_lossy()));
-        if markdown.is_file() {
-            let package = target.join(name); fs::create_dir(&package)?;
-            copy_tree(&markdown, &package.join(markdown.file_name().unwrap()), size)?;
-            if source.join("assets").is_dir() { copy_tree(&source.join("assets"), &package.join("assets"), size)?; }
-            *count += 1;
-        } else { export_notebook(&source, &target.join(name), size, count)?; }
-    }
-    Ok(())
-}
-pub fn export_markdown(destination: &str) -> LibraryResult<TransferResult> {
-    let dest = external_destination(destination)?;
-    let temp = dest.parent().unwrap().join(format!(".mne-export-{}", uuid::Uuid::new_v4()));
-    let work = Stage(temp); let mut size = 0; let mut count = 0;
-    export_notebook(&paths::notebooks_root()?, &work.0, &mut size, &mut count)?;
-    fs::rename(&work.0, &dest)?;
-    Ok(TransferResult { path: dest.display().to_string(), note_count: count })
-}
 pub fn export_note(destination: &str, note_path: &str) -> LibraryResult<TransferResult> {
     safe_relative(note_path)?;
     let source = paths::notebook_path(note_path)?;
@@ -437,12 +413,6 @@ mod tests {
             let hits = search("只在正文出现的关键词").unwrap();
             assert_eq!(hits.len(), 1); assert_eq!(hits[0].path, path); assert_eq!(hits[0].line, 3);
             assert!(library::read_note(&format!("{}/章节 2", result.path)).is_ok());
-            let dest = base.join("exported");
-            export_markdown(dest.to_str().unwrap()).unwrap();
-            let exported_pkg = dest.join(&path);
-            assert_eq!(fs::read_to_string(exported_pkg.join("正文.md")).unwrap(), body);
-            assert_eq!(fs::read_dir(exported_pkg.join("assets")).unwrap().count(), 1);
-            assert!(export_markdown(dest.to_str().unwrap()).is_err());
             let single = base.join("single-note");
             let result = export_note(single.to_str().unwrap(), &path).unwrap();
             assert_eq!(result.note_count, 1);

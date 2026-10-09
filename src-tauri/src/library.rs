@@ -1542,30 +1542,3 @@ pub fn empty_trash() -> LibraryResult<()> {
     }
     Ok(())
 }
-
-pub fn library_stats() -> LibraryResult<LibraryStats> {
-    let notebooks = list_notebooks()?;
-    let mut notebook_count = 0usize;
-    let mut note_count = 0usize;
-    fn walk(
-        nodes: &[LibraryNotebook],
-        notebook_count: &mut usize,
-        note_count: &mut usize,
-    ) {
-        for n in nodes {
-            *notebook_count += 1;
-            *note_count += n.notes.len();
-            walk(&n.children, notebook_count, note_count);
-        }
-    }
-    walk(
-        &notebooks,
-        &mut notebook_count,
-        &mut note_count,
-    );
-    Ok(LibraryStats {
-        notebook_count,
-        note_count,
-        trash_count: list_trash()?.len(),
-    })
-}

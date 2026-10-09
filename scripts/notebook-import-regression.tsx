@@ -16,7 +16,7 @@ mockIPC((command,payload)=>{
   if(command==='plugin:dialog|open') return mode==='cancel'?null:['/fixture/模拟导入.md'];
   if(command==='plugin:window|is_fullscreen'||command==='plugin:window|is_maximized') return false;
   if(command==='list_notebooks') return structuredClone([root]);
-  if(command==='library_stats') return {noteCount:root.notes.length+child.notes.length,notebookCount:2,trashCount:0};
+  if(command==='list_trash') return [];
   if(command==='transfer_library') {
     const args=payload as {operation:string;paths:string[];targetNotebookPath:string};
     report(JSON.stringify(args));

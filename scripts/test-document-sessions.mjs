@@ -107,3 +107,51 @@ assert.match(renamed.documents.get("Moved/Final").error, /CONFLICT/);
 await assert.rejects(renamed.flush(), /CONFLICT/);
 assert.equal(renameDisk.get("Moved/Final"), "# Final\nexternal change");
 console.log("Passed: cross-window note/notebook relocation, pending writes and reads, latest draft preservation and genuine conflicts.");
+
+// Closing many notes must release clean text while keeping live editors and recovery data.
+let reads = 0;
+const bounded = new DocumentSessions({
+  read: async path => { reads++; return `${path}\n${'正文'.repeat(16000)}`; },
+  write: async () => {},
+});
+for (let i = 0; i < 200; i++) await bounded.open(`Book/${i}`);
+bounded.stage('Book/199', 'unsaved text');
+assert.equal(bounded.pruneClosed(new Set(['Book/0', 'Book/1'])), 197);
+assert.deepEqual([...bounded.documents.keys()], ['Book/0', 'Book/1', 'Book/199']);
+assert.equal(bounded.documents.get('Book/199').draft, 'unsaved text');
+await bounded.open('Book/2');
+assert.equal(reads, 201, 'Evicted notes reload from disk');
+bounded.documents.get('Book/2').error = 'disk error';
+assert.equal(bounded.pruneClosed(new Set()), 2);
+assert.ok(bounded.documents.has('Book/2'), 'Errors remain visible and recoverable');
+
+let finishSave;
+const pendingSave = new DocumentSessions({read: async () => 'old', write: () => new Promise(resolve => {finishSave = resolve;})});
+await pendingSave.open('A'); pendingSave.stage('A', 'new');
+const inFlight = pendingSave.save('A');
+assert.equal(pendingSave.pruneClosed(new Set()), 0);
+finishSave(); await inFlight;
+assert.equal(pendingSave.pruneClosed(new Set()), 1);
+
+let finishRead;
+let pausePoll = false;
+const stalePoll = new DocumentSessions({read: () => pausePoll ? new Promise(resolve => {finishRead = resolve;}) : Promise.resolve('old'),write:async()=>{}});
+await stalePoll.open('A'); pausePoll = true;
+const oldPoll = stalePoll.checkExternal('A');
+stalePoll.pruneClosed(new Set()); pausePoll = false;
+await stalePoll.open('A');
+finishRead('outdated'); await oldPoll;
+assert.equal(stalePoll.documents.get('A').draft, 'old', 'A stale poll cannot overwrite a reopened session');
+console.log('Passed: 200 cached documents reduce to 3 protected/dirty documents; eviction preserves queued writes, errors, recovery and stale-read safety.');
+
+const snapshotBuild = await build({entryPoints:['src/lib/librarySnapshot.ts'],bundle:true,write:false,format:'esm',platform:'node'});
+const {reconcileNotebooks} = await import(`data:text/javascript;base64,${Buffer.from(snapshotBuild.outputFiles[0].text).toString('base64')}`);
+const library = [{id:'B',name:'B',parentPath:null,icon:'folder',colorHex:null,children:[],notes:[{id:'B/N',title:'N',notebookPath:'B',modifiedAt:'before'}]}];
+assert.equal(reconcileNotebooks(library, structuredClone(library)), library);
+const updated = structuredClone(library); updated[0].notes[0].modifiedAt = 'after';
+const merged = reconcileNotebooks(library, updated);
+assert.notEqual(merged, library);
+assert.equal(merged[0].children, library[0].children);
+assert.equal(merged[0].notes[0].modifiedAt, 'after');
+assert.deepEqual(reconcileNotebooks(library, []), []);
+console.log('Passed: unchanged library polls preserve object identity; changed metadata and deletions remain visible.');
