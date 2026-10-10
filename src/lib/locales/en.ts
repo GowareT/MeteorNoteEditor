@@ -1,5 +1,11 @@
 // Chinese source messages are stable translation keys. User content is never translated.
 export const en: Record<string, string> = {
+  "查看已隐藏的保存提示（{0}）": "Show hidden save alerts ({0})",
+  "原笔记已不存在，未保存的草稿仍保留。可另存副本，或在回收站恢复原笔记。": "The original note is missing. Your unsaved draft is preserved. Save a copy or restore the original note from Trash.",
+  "原笔记已不存在，没有未保存的修改。": "The original note is missing. There are no unsaved changes.",
+  "打开回收站": "Open Trash",
+  "确定放弃此未保存草稿？此操作无法撤销。": "Discard this unsaved draft? This cannot be undone.",
+  "放弃草稿": "Discard draft",
   "当前：{0}": "Now: {0}",
   "最近保存：{0}": "Last saved: {0}",
   "搜索笔记": "Search notes",

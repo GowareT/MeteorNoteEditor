@@ -12,7 +12,9 @@ export function DocumentSafety() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [recovered, setRecovered] = useState<api.RecoveredWindowDraft[]>([]);
-  const problems = [...api.documents.documents.values()].filter(doc => doc.error);
+  const allProblems = [...api.documents.documents.values()].filter(doc => doc.error);
+  const problems = allProblems.filter(doc => doc.dismissedError !== doc.error);
+  const hiddenCount = allProblems.length - problems.length;
   useEffect(() => {
     let disposed = false;
     void api.recoveredWindowDrafts().then(entries => { if (!disposed) setRecovered(entries); }).catch(error => { if (!disposed) setError(errorMessage(error)); });
@@ -86,6 +88,7 @@ export function DocumentSafety() {
   }
   return <>
     {closing && <div className="mne-closing" role="status">{t("正在保存，请稍候…")}</div>}
+    {hiddenCount > 0 && <button className="mn-toolbar-btn" onClick={() => api.documents.showErrors()}>{t("查看已隐藏的保存提示（{0}）", hiddenCount)}</button>}
     {(error || problems.length > 0 || recovered.length > 0) && <section className="mne-save-problems" aria-label={t("保存与冲突处理")}>
       {error && <p role="alert">{error}</p>}
       {recovered.map(entry => <div key={`${entry.storageKey}/${entry.path}`}>
@@ -97,11 +100,23 @@ export function DocumentSafety() {
       </div>)}
       {problems.map(doc => <div key={doc.path}>
         <strong>{doc.path}</strong><p role="alert">{errorMessage(doc.error)}</p>
-        <button disabled={busy} onClick={() => void resolve(() => api.documents.save(doc.path))}>{t("重试保存")}</button>
-        <button disabled={busy} onClick={() => void resolve(() => api.saveConflictCopy(doc.path))}>{t("将草稿另存为副本")}</button>
-        <button disabled={busy} onClick={() => {
-          if (confirm(t("放弃此未保存草稿，使用磁盘版本？"))) void resolve(() => api.documents.useDisk(doc.path));
-        }}>{t("使用磁盘版本")}</button>
+        {doc.missing ? <>
+          <p>{doc.draft !== doc.base ? t("原笔记已不存在，未保存的草稿仍保留。可另存副本，或在回收站恢复原笔记。") : t("原笔记已不存在，没有未保存的修改。")}</p>
+          <button disabled={busy} onClick={() => void useAppStore.getState().select("trash")}>{t("打开回收站")}</button>
+          {doc.draft !== doc.base && <>
+            <button disabled={busy} onClick={() => void resolve(() => api.saveConflictCopy(doc.path))}>{t("将草稿另存为副本")}</button>
+            <button disabled={busy} onClick={() => {
+              if (confirm(t("确定放弃此未保存草稿？此操作无法撤销。"))) api.documents.forget(doc.path);
+            }}>{t("放弃草稿")}</button>
+          </>}
+        </> : <>
+          <button disabled={busy} onClick={() => void resolve(() => api.documents.save(doc.path))}>{t("重试保存")}</button>
+          <button disabled={busy} onClick={() => void resolve(() => api.saveConflictCopy(doc.path))}>{t("将草稿另存为副本")}</button>
+          <button disabled={busy} onClick={() => {
+            if (confirm(t("放弃此未保存草稿，使用磁盘版本？"))) void resolve(() => api.documents.useDisk(doc.path));
+          }}>{t("使用磁盘版本")}</button>
+        </>}
+        <button disabled={busy} onClick={() => api.documents.dismissError(doc.path)}>{t("关闭提示")}</button>
       </div>)}
       {error && <button onClick={() => setError("")}>{t("关闭提示")}</button>}
     </section>}

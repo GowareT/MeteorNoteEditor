@@ -1,6 +1,6 @@
 import { syncLeadingTitle } from "./noteTitle";
 
-export type DocumentSession = { path: string; base: string; draft: string; error?: string; external?: string; saving: boolean };
+export type DocumentSession = { path: string; base: string; draft: string; error?: string; external?: string; saving: boolean; missing?: boolean; dismissedError?: string };
 export type PathChange = { from: string; to: string; kind: "note" | "notebook"; before?: string | null; after?: string | null };
 type Transport = { read: (path: string) => Promise<string>; write: (path: string, content: string, expected: string) => Promise<void> };
 
@@ -56,6 +56,8 @@ export class DocumentSessions {
           session.base = content;
           session.error = undefined;
           session.external = undefined;
+          session.missing = false;
+          session.dismissedError = undefined;
           this.changed();
         }
       } catch (error) {
@@ -75,18 +77,44 @@ export class DocumentSessions {
     try {
       const base = session.base;
       const content = await this.transport.read(path);
-      if (this.documents.get(path) !== session || session.path !== path || session.saving || session.base !== base || content === base) return;
+      if (this.documents.get(path) !== session || session.path !== path || session.saving || session.base !== base) return;
+      const wasMissing = session.missing;
+      session.missing = false;
+      if (content === base) {
+        if (wasMissing || session.error?.startsWith("无法读取笔记：")) { session.error = undefined; session.dismissedError = undefined; this.changed(); }
+        return;
+      }
       if (session.draft === base) { session.base = content; session.draft = content; session.error = undefined; }
       else { session.external = content; session.error = "CONFLICT: 检测到外部修改，你的编辑仍保留在草稿中"; }
       this.changed();
-    } catch (error) { if (this.documents.get(path) === session && session.path === path) { session.error = `无法读取笔记：${String(error)}`; this.changed(); } }
+    } catch (error) {
+      if (this.documents.get(path) === session && session.path === path) {
+        const message = `无法读取笔记：${String(error)}`;
+        const missing = String(error).includes("笔记不存在或已移到回收站");
+        if (session.error !== message || session.missing !== missing) {
+          session.error = message; session.missing = missing; this.changed();
+        }
+      }
+    }
+  }
+  dismissError(path: string) {
+    const session = this.documents.get(path);
+    if (!session?.error) return;
+    // A missing, unchanged document has no draft to recover.
+    if (session.missing && session.base === session.draft && !session.saving && !this.queues.has(path)) this.documents.delete(path);
+    else session.dismissedError = session.error;
+    this.changed();
+  }
+  showErrors() {
+    for (const session of this.documents.values()) session.dismissedError = undefined;
+    this.changed();
   }
   /** Release closed, saved documents only. Failed/queued saves and conflicts stay recoverable. */
   pruneClosed(openPaths: ReadonlySet<string>) {
     let removed = 0;
     for (const [path, session] of this.documents) {
       if (!openPaths.has(path) && session.base === session.draft && !session.saving &&
-          !session.error && session.external === undefined && !this.queues.has(path)) {
+          (!session.error || session.missing) && session.external === undefined && !this.queues.has(path)) {
         this.documents.delete(path);
         removed++;
       }

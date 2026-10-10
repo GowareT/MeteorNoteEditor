@@ -155,3 +155,38 @@ assert.equal(merged[0].children, library[0].children);
 assert.equal(merged[0].notes[0].modifiedAt, 'after');
 assert.deepEqual(reconcileNotebooks(library, []), []);
 console.log('Passed: unchanged library polls preserve object identity; changed metadata and deletions remain visible.');
+
+let missingFile = false;
+let restoredBody = "original";
+const preservedDrafts = [];
+const deletedSessions = new DocumentSessions({
+  read: async () => { if (missingFile) throw "笔记不存在或已移到回收站"; return restoredBody; },
+  write: async () => {},
+}, entries => { preservedDrafts.splice(0, preservedDrafts.length, ...entries.map(entry => ({...entry}))); });
+await deletedSessions.open("Book/Clean");
+await deletedSessions.open("Book/Dirty");
+deletedSessions.stage("Book/Dirty", "unsaved draft");
+missingFile = true;
+await deletedSessions.checkExternal("Book/Clean");
+await deletedSessions.checkExternal("Book/Dirty");
+assert.equal(deletedSessions.documents.get("Book/Dirty").missing, true);
+deletedSessions.dismissError("Book/Clean");
+assert.equal(deletedSessions.documents.has("Book/Clean"), false);
+deletedSessions.dismissError("Book/Dirty");
+const hiddenDraft = deletedSessions.documents.get("Book/Dirty");
+assert.equal(hiddenDraft.draft, "unsaved draft");
+assert.equal(hiddenDraft.dismissedError, hiddenDraft.error);
+assert.equal(preservedDrafts[0].draft, "unsaved draft");
+const beforePoll = deletedSessions.snapshot();
+await deletedSessions.checkExternal("Book/Dirty");
+assert.equal(deletedSessions.snapshot(), beforePoll, "Repeated missing-file polling must not reopen the dismissed alert");
+assert.equal(deletedSessions.pruneClosed(new Set()), 0, "A dismissed dirty draft must remain recoverable");
+deletedSessions.showErrors();
+assert.equal(hiddenDraft.dismissedError, undefined);
+missingFile = false;
+await deletedSessions.checkExternal("Book/Dirty");
+assert.equal(hiddenDraft.error, undefined, "Restoring the same original file must clear the missing-file error");
+assert.equal(hiddenDraft.draft, "unsaved draft");
+await deletedSessions.save("Book/Dirty");
+assert.equal(hiddenDraft.base, "unsaved draft");
+console.log("Passed: missing-note alert dismissal, preserved drafts, repeated polls, reopening alerts and original-note restoration.");
