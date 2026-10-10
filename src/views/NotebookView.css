@@ -19,3 +19,6 @@
 .mne-notebook-import-status p { margin: 0; overflow-wrap: anywhere; }
 .mne-notebook-import { flex-shrink: 0; }
 .mne-notebook-import:disabled { opacity: .5; cursor: wait; }
+
+.mne-notes .mne-note-title { display: flex; align-items: center; gap: 6px; }
+.mne-note-star { flex-shrink: 0; color: #c58a16; }

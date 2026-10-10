@@ -120,7 +120,7 @@ mod windows_native {
         fn drop(&mut self) { let _ = std::fs::remove_file(&self.0); }
     }
 
-    pub unsafe fn start(view: tauri::PlatformWebview, destination: PathBuf, tx: Sender<Result<(), String>>, guard: super::PdfGuard) -> Result<(), String> {
+    pub unsafe fn start(view: tauri::webview::PlatformWebview, destination: PathBuf, tx: Sender<Result<(), String>>, guard: super::PdfGuard) -> Result<(), String> {
         let webview: ICoreWebView2_7 = view.controller().CoreWebView2().map_err(|e| e.to_string())?
             .cast().map_err(|_| "当前 WebView2 不支持 PDF 导出，请更新 Microsoft Edge WebView2 Runtime".to_string())?;
         let environment: ICoreWebView2Environment6 = view.environment().cast().map_err(|e| e.to_string())?;

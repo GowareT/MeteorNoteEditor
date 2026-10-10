@@ -142,6 +142,7 @@ export const en: Record<string, string> = {
   "取消固定": "Unpin",
   "固定": "Pin",
   "重新加载": "Reload",
+  "已收藏": "Favorited",
   "取消收藏": "Remove from favorites",
   "收藏": "Add to favorites",
   "在新窗口打开": "Open in new window",

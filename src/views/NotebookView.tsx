@@ -1,11 +1,11 @@
 import { getLocale, t } from "@/lib/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
-import { Upload, ChevronDown } from "lucide-react";
+import { Upload, ChevronDown, Star } from "lucide-react";
 import { ContextMenu } from "@/components/ContextMenu";
 import { useLibraryTransfer } from "@/hooks/useLibraryTransfer";
 import { LibraryIcon } from "@/components/LibraryIcon";
-import { useAppStore } from "@/store/appStore";
+import { pageKey, useAppStore } from "@/store/appStore";
 import type { LibraryNotebook } from "@/types/library";
 import { NOTE_SORT_OPTIONS, NOTE_SORT_KEY, NOTE_SORT_EVENT, parseNoteSort, readNoteSort, writeNoteSort, sortNotes } from "@/lib/noteSort";
 import "./NotebookView.css";
@@ -23,6 +23,7 @@ function NoteTime({ value }: { value?: string | null }) {
 
 export function NotebookView({notebookPath}: {notebookPath?: string}) {
   const notebooks = useAppStore(s => s.notebooks);
+  const favoriteKeys = useAppStore(s => s.favoriteKeys);
   const select = useAppStore(s => s.select);
   const createNote = useAppStore(s => s.createQuickNote);
   const createNoteIn = useAppStore(s => s.createNoteInNotebook);
@@ -46,8 +47,8 @@ export function NotebookView({notebookPath}: {notebookPath?: string}) {
       ...(!notebookPath || node.id === notebookPath || node.id.startsWith(`${notebookPath}/`) ? node.notes : []),
       ...walk(node.children),
     ]);
-    return sortNotes(walk(notebooks), order);
-  }, [notebooks, notebookPath, order]);
+    return sortNotes(walk(notebooks), order, favoriteKeys);
+  }, [notebooks, notebookPath, order, favoriteKeys]);
   return <div className="mn-page mne-notebook-page">
     <header className="mn-panel-header mne-notes-header">
       <div><h2>{notebookPath?.split('/').pop() ?? t("笔记")}</h2><p>{t("{0} 篇笔记", notes.length)}</p></div>
@@ -68,7 +69,7 @@ export function NotebookView({notebookPath}: {notebookPath?: string}) {
       {notes.map(note => <li key={note.id}><button onClick={() => void select({note: note.id})}>
         <LibraryIcon id={note.icon} size={20} fallback="document" />
         <span>
-          <strong>{note.title}</strong>
+          <strong className="mne-note-title">{note.title}{favoriteKeys.has(pageKey({ note: note.id })) && <Star className="mne-note-star" size={14} fill="currentColor" role="img" aria-label={t("已收藏")} />}</strong>
           <small>{note.notebookPath}</small>
           <small className="mne-notes-dates">
             <span>{t("创建时间：")}<NoteTime value={note.createdAt} /></span>

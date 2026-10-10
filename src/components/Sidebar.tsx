@@ -15,7 +15,7 @@ import * as api from "@/lib/api";
 import { useBrand } from "@/hooks/useBrand";
 import { useLibraryTransfer } from "@/hooks/useLibraryTransfer";
 import { handleWindowDragMouseDown } from "@/lib/windowDrag";
-import { SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN, useAppStore, } from "@/store/appStore";
+import { SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN, pageKey, useAppStore, } from "@/store/appStore";
 import type { LibraryNotebook, LibraryNote, SidebarPage } from "@/types/library";
 import "./Sidebar.css";
 function isSamePage(a: SidebarPage, b: SidebarPage) {
@@ -322,6 +322,8 @@ export function Sidebar() {
     const toggleSidebar = useAppStore((s) => s.toggleSidebar);
     const setSidebarWidth = useAppStore((s) => s.setSidebarWidth);
     const refresh = useAppStore((s) => s.refresh);
+    const favoriteKeys = useAppStore((s) => s.favoriteKeys);
+    const toggleFavorite = useAppStore((s) => s.toggleFavorite);
     const [resizing, setResizing] = useState(false);
     const dragRef = useRef<{
         startX: number;
@@ -533,6 +535,11 @@ export function Sidebar() {
         if (target.kind === "note") {
             const note = target.note;
             return [
+                {
+                    id: "favorite",
+                    label: favoriteKeys.has(pageKey({ note: note.id })) ? t("取消收藏") : t("收藏"),
+                    onSelect: () => toggleFavorite({ note: note.id }),
+                },
                 {
                     id: "rename",
                     label: t("重命名"),

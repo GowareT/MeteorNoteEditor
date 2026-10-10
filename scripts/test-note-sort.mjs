@@ -31,3 +31,11 @@ cache.set(NOTE_SORT_KEY, "corrupt"); assert.equal(readNoteSort(), "manual");
 globalThis.localStorage = { getItem() { throw Error("unavailable"); }, setItem() { throw Error("unavailable"); } };
 assert.equal(readNoteSort(), "manual"); assert.doesNotThrow(() => writeNoteSort("name-asc"));
 console.log("Passed: creation/modification/name sorting, natural numbers, time zones, deterministic ties, missing dates, manual order and preference persistence.");
+
+const favorites = new Set(["note:Book/B", "note:Book/C", "notebook:Book", "note:Deleted"]);
+assert.deepEqual(sortNotes(notes, "manual", favorites).map(note => note.id), ["Book/C", "Book/B", "Book/A"]);
+assert.deepEqual(sortNotes(notes, "manual", new Set(["note:Book/B"])).map(note => note.id), ["Book/B", "Book/C", "Book/A"]);
+assert.deepEqual(sortNotes(notes, "manual", new Set()).map(note => note.id), ["Book/C", "Book/A", "Book/B"]);
+assert.deepEqual(sortNotes(notes, "name-asc", favorites).map(note => note.id), ["Book/A", "Book/B", "Book/C"]);
+assert.deepEqual(notes.map(note => note.id), ["Book/C", "Book/A", "Book/B"]);
+console.log("Passed: favorites first in default order, stable order within groups, removing favorites and explicit sort preservation.");

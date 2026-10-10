@@ -101,3 +101,18 @@ for (const action of [() => store.getState().select(other.page), () => store.get
   assert.match(store.getState().error, /Save failed/);
 }
 console.log("Passed: failed saves prevent navigation, closing and split transitions.");
+
+// Favorites use the same store action from tabs and the document tree.
+const favoritesStorage = new Map();
+globalThis.localStorage = { getItem: key => favoritesStorage.get(key) ?? null,
+  setItem: (key, value) => favoritesStorage.set(key, value) };
+reset({ favoriteKeys: new Set() });
+store.getState().toggleFavorite(note.page);
+assert.equal(store.getState().favoriteKeys.has("note:Book/Child/Note"), true);
+assert.deepEqual(JSON.parse(favoritesStorage.get("mn.favoritePages")), ["note:Book/Child/Note"]);
+assert.deepEqual(store.getState().selected, note.page);
+store.getState().toggleFavorite(note.page);
+assert.equal(store.getState().favoriteKeys.size, 0);
+assert.deepEqual(JSON.parse(favoritesStorage.get("mn.favoritePages")), []);
+delete globalThis.localStorage;
+console.log("Passed: note favorites toggle and persist without changing selection.");

@@ -32,10 +32,14 @@ function timestamp(value?: string | null): number | null {
   return Number.isFinite(time) ? time : null;
 }
 
-export function sortNotes(notes: readonly LibraryNote[], order: NoteSort): LibraryNote[] {
+export function sortNotes(notes: readonly LibraryNote[], order: NoteSort, favoriteKeys: ReadonlySet<string> = new Set()): LibraryNote[] {
   const names = new Intl.Collator(getLocale(), { numeric: true, sensitivity: "base" });
   const result = [...notes];
-  if (order === "manual") return result;
+  if (order === "manual") {
+    // Stable partition preserves the manual order within both groups.
+    return [...result.filter(note => favoriteKeys.has(`note:${note.id}`)),
+      ...result.filter(note => !favoriteKeys.has(`note:${note.id}`))];
+  }
   const direction = order.endsWith("-desc") ? -1 : 1;
   return result.sort((a, b) => {
     const byName = names.compare(a.title, b.title);
