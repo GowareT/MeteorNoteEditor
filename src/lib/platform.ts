@@ -7,7 +7,7 @@ export function currentPlatform(): "macos" | "windows" | "other" {
   return "other";
 }
 
-export const supportsNativePdf = () => currentPlatform() === "macos";
+export const supportsNativePdf = () => ["macos", "windows"].includes(currentPlatform());
 export const revealFolderLabel = () => currentPlatform() === "macos" ? t("在访达中打开") : t("打开文件夹");
 
 /** Convert file URLs without losing Windows drive letters or UNC server names. */

@@ -541,7 +541,7 @@ export function NoteEditorView({ path, detached = false, }: {
                 disabled: transfer.busy,
                 submenu: [
                     { id: "export-note", label: t("当前笔记（Markdown）…"), description: t("保存正文和图片到文件夹，可继续编辑"), onSelect: () => void transfer.run("export-note") },
-                    { id: "export-pdf", label: t("当前笔记（PDF）…"), description: supportsNativePdf() ? t("保存排版后的文档，适合分享和打印") : t("保存排版后的文档，仅 macOS 支持"), disabled: !supportsNativePdf(), onSelect: () => void transfer.run("pdf") },
+                    { id: "export-pdf", label: t("当前笔记（PDF）…"), description: supportsNativePdf() ? t("保存排版后的文档，适合分享和打印") : t("保存排版后的文档，仅 macOS 和 Windows 支持"), disabled: !supportsNativePdf(), onSelect: () => void transfer.run("pdf") },
                 ],
             },
             { id: "sep-transfer", label: "", separator: true },

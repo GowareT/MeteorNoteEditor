@@ -72,3 +72,12 @@
 - Fixture: `scripts/click-offset-regression.html` (button or `?autorun`; optional `font` and `width`). Checks actual DOM/height-map agreement, the reported Chinese text, single/multiline callouts, clicks at several vertical positions, forward/backward dragging, Shift-click, double-click and unchanged document content.
 - macOS WKWebView: before the fix, 18 of the initial 24 click checks failed; afterward all 32 expanded checks passed at 15 px / 940 px width and 20 px / 520 px width. DOM and measured line boundaries agree after both callouts.
 - Frontend tests and production build passed. Existing bundle-size advisory remains.
+
+
+## 2026-10-10：Windows PDF 导出
+
+- 新增 Windows WebView2 `PrintToPdf` 实现，复用完整 Markdown 渲染、图片/字体加载等待和打印样式；A4 页面、18 mm 上下边距、16 mm 左右边距，保留背景并关闭默认页眉页脚。
+- Windows 导出按钮开放，补齐中英文提示。生成到同目录临时文件，检查 PDF 文件头后发布，不覆盖现有目标；结束或失败时释放导出锁并清理临时文件。
+- 前端完整测试与生产构建通过，macOS Rust 编译检查通过。新增 Windows 导出入口、中文路径、取消保存和不支持平台的回归检查。
+- Windows 原生导出模块使用项目锁定的 WebView2/Windows 依赖，通过 `x86_64-pc-windows-gnu` 类型编译检查；该检查仅替代 Tauri 的平台句柄入口，不执行实际导出。
+- 本机完整 Windows 交叉编译受缺少 `x86_64-w64-mingw32-gcc` 限制。完整 Windows 构建及真实导出仍需 Windows 工作流和实机验证，尤其是中文字体、表格、公式、长文分页、文件占用和旧 WebView2 Runtime。

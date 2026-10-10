@@ -22,7 +22,7 @@ Development priorities are editing, reading, and keeping notes safe. Everyday im
 - **Choose how to see a note.** Live preview while writing, a read-only view for reading, or Markdown source for precise edits. Light and dark appearance, editor themes, and font size are adjustable.
 - **Find and organize your notes.** Notebooks, favorites, and full-text search; sort by creation time, modification time, or name in either direction, or keep a manual order. Tabs, split views, and separate windows let you refer to another note while writing.
 - **Keep your work locally.** Markdown files on your computer, with autosave, version history, trash, external change detection, and draft recovery.
-- **Move and share your writing.** Import or export Markdown with image attachments, back up and restore the full library, and export the current note as PDF on macOS.
+- **Move and share your writing.** Import or export Markdown with image attachments, back up and restore the full library, and export the current note as PDF on macOS and Windows.
 
 ## Display modes
 
@@ -47,7 +47,7 @@ The current project version is `0.1.0` and is still under development.
 | Linux | Not verified; no dedicated packaging configuration is provided. |
 | Browser | Editor preview and development test pages are available. The app test page uses temporary in-memory notes; a standalone web notebook with persistent storage is not implemented. |
 
-Direct PDF export is currently available only on macOS. The presence of a Windows workflow does not mean its builds have passed. See the [verification notes (Chinese)](docs/VERIFICATION.md) for completed checks and limitations.
+Direct PDF export is implemented for macOS and Windows; Windows export still requires validation on a Windows machine. The presence of a Windows workflow does not mean its builds have passed. See the [verification notes (Chinese)](docs/VERIFICATION.md) for completed checks and limitations.
 
 ## Run from source
 

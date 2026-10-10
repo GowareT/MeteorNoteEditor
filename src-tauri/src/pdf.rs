@@ -1,18 +1,34 @@
 use tauri::WebviewWindow;
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 static PDF_BUSY: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 struct PdfGuard;
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 impl Drop for PdfGuard {
     fn drop(&mut self) { PDF_BUSY.store(false, std::sync::atomic::Ordering::Release); }
 }
 
 #[tauri::command]
 pub async fn save_pdf(window: WebviewWindow, destination: String) -> Result<(), String> {
-    #[cfg(not(target_os = "macos"))]
-    { let _ = (window, destination); return Err("PDF 导出目前支持 macOS".into()); }
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    { let _ = (window, destination); return Err("PDF 导出目前支持 macOS 和 Windows".into()); }
+    #[cfg(target_os = "windows")]
+    {
+        if PDF_BUSY.swap(true, std::sync::atomic::Ordering::AcqRel) { return Err("另一个窗口正在导出 PDF，请稍后重试".into()); }
+        let guard = PdfGuard;
+        let destination = crate::transfer::external_destination(&destination).map_err(|e| e.to_string())?;
+        if !destination.extension().is_some_and(|e| e.eq_ignore_ascii_case("pdf")) { return Err("请选择 .pdf 文件".into()); }
+        let (tx, rx) = std::sync::mpsc::channel();
+        window.with_webview(move |webview| {
+            let error_tx = tx.clone();
+            if let Err(error) = unsafe { windows_native::start(webview, destination, tx, guard) } {
+                let _ = error_tx.send(Err(error));
+            }
+        }).map_err(|e| e.to_string())?;
+        tauri::async_runtime::spawn_blocking(move || rx.recv().map_err(|e| e.to_string())?)
+            .await.map_err(|e| e.to_string())?
+    }
     #[cfg(target_os = "macos")]
     {
         if PDF_BUSY.swap(true, std::sync::atomic::Ordering::AcqRel) { return Err("另一个窗口正在导出 PDF，请稍后重试".into()); }
@@ -89,5 +105,57 @@ mod native {
         operation.runOperationModalForWindow_delegate_didRunSelector_contextInfo(
             &window, Some(&*delegate), Some(sel!(printOperation:didRun:contextInfo:)), context.cast(),
         );
+    }
+}
+
+#[cfg(target_os = "windows")]
+mod windows_native {
+    use std::{os::windows::ffi::OsStrExt, path::PathBuf, sync::mpsc::Sender};
+    use webview2_com::{Microsoft::Web::WebView2::Win32::{ICoreWebView2_7, ICoreWebView2Environment6}, PrintToPdfCompletedHandler};
+    use windows::core::{Interface, PCWSTR};
+
+    // Removing the temporary file also covers immediate COM errors and callback destruction.
+    struct Temporary(PathBuf);
+    impl Drop for Temporary {
+        fn drop(&mut self) { let _ = std::fs::remove_file(&self.0); }
+    }
+
+    pub unsafe fn start(view: tauri::PlatformWebview, destination: PathBuf, tx: Sender<Result<(), String>>, guard: super::PdfGuard) -> Result<(), String> {
+        let webview: ICoreWebView2_7 = view.controller().CoreWebView2().map_err(|e| e.to_string())?
+            .cast().map_err(|_| "当前 WebView2 不支持 PDF 导出，请更新 Microsoft Edge WebView2 Runtime".to_string())?;
+        let environment: ICoreWebView2Environment6 = view.environment().cast().map_err(|e| e.to_string())?;
+        let settings = environment.CreatePrintSettings().map_err(|e| e.to_string())?;
+        // WebView2 dimensions are inches; match the existing A4 / 18 mm / 16 mm layout.
+        settings.SetPageWidth(210.0 / 25.4).map_err(|e| e.to_string())?;
+        settings.SetPageHeight(297.0 / 25.4).map_err(|e| e.to_string())?;
+        settings.SetMarginTop(18.0 / 25.4).map_err(|e| e.to_string())?;
+        settings.SetMarginBottom(18.0 / 25.4).map_err(|e| e.to_string())?;
+        settings.SetMarginLeft(16.0 / 25.4).map_err(|e| e.to_string())?;
+        settings.SetMarginRight(16.0 / 25.4).map_err(|e| e.to_string())?;
+        settings.SetShouldPrintBackgrounds(true).map_err(|e| e.to_string())?;
+        settings.SetShouldPrintHeaderAndFooter(false).map_err(|e| e.to_string())?;
+        settings.SetShouldPrintSelectionOnly(false).map_err(|e| e.to_string())?;
+        let temporary = Temporary(destination.parent().unwrap().join(format!(".mne-pdf-{}.pdf", uuid::Uuid::new_v4())));
+        let path: Vec<u16> = temporary.0.as_os_str().encode_wide().chain(Some(0)).collect();
+        let callback = PrintToPdfCompletedHandler::create(Box::new(move |status, success| {
+            let result = (|| {
+                status.map_err(|e| e.to_string())?;
+                if !success { return Err("PDF 生成失败或已取消".into()); }
+                let mut file = std::fs::File::open(&temporary.0).map_err(|e| e.to_string())?;
+                let mut signature = [0; 5];
+                std::io::Read::read_exact(&mut file, &mut signature).map_err(|e| e.to_string())?;
+                if &signature != b"%PDF-" { return Err("系统没有生成有效 PDF".into()); }
+                file.sync_all().map_err(|e| e.to_string())?;
+                drop(file);
+                // A hard link publishes without overwriting an existing destination.
+                std::fs::hard_link(&temporary.0, &destination).map_err(|e| e.to_string())?;
+                Ok(())
+            })();
+            drop(temporary);
+            drop(guard);
+            let _ = tx.send(result);
+            Ok(())
+        }));
+        webview.PrintToPdf(PCWSTR(path.as_ptr()), &settings, &callback).map_err(|e| e.to_string())
     }
 }

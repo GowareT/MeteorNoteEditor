@@ -81,7 +81,14 @@ assert.ok(view.slice(view.indexOf("const editorMenuItems ="), view.indexOf("cons
 console.log("Passed: notebook import destinations, required target, more-menu exports, current-note scope, picker cancellation, restore confirmation and save errors.");
 Object.defineProperty(globalThis, "navigator", { value: { platform: "Win32" }, configurable: true });
 options = undefined;
-await assert.rejects(() => run("pdf", "Book/Note"), /仅支持 macOS/);
+selection = "C:\\Users\\test\\笔记 导出";
+await run("pdf", "Book/Note");
+assert.deepEqual(calls.pop(), { operation: "pdf", paths: ["Book/Note", `${selection}.pdf`] });
+selection = null;
+assert.equal(await run("pdf", "Book/Note"), null);
+Object.defineProperty(globalThis, "navigator", { value: { platform: "Linux" }, configurable: true });
+options = undefined;
+await assert.rejects(() => run("pdf", "Book/Note"), /仅支持 macOS 和 Windows/);
 assert.equal(options, undefined, "Unsupported PDF export must not open a save dialog");
 delete globalThis.navigator;
 delete globalThis.__transferPicker;

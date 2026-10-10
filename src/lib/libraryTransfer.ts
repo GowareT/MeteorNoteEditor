@@ -10,7 +10,7 @@ export async function chooseLibraryTransfer(kind: TransferKind, notePath?: strin
   if (importing && !targetNotebookPath) throw new Error(t("请先打开要导入到的笔记本"));
   if ((kind === "export-note" || kind === "pdf") && !notePath) throw new Error(t("未选择笔记"));
   if (kind === "pdf") {
-    if (!supportsNativePdf()) throw new Error(t("直接导出 PDF 目前仅支持 macOS，请先导出 Markdown"));
+    if (!supportsNativePdf()) throw new Error(t("直接导出 PDF 目前仅支持 macOS 和 Windows，请先导出 Markdown"));
     const selected = await save({ title: t("导出当前笔记为 PDF"), defaultPath: `${notePath!.split("/").pop()}.pdf`, filters: [{ name: "PDF", extensions: ["pdf"] }] });
     if (!selected) return null;
     const { exportNotePdf } = await import("./pdfExport");

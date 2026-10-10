@@ -15,9 +15,11 @@ assert.equal(resolveLocalImagePath("file:///C:/a.png", "Book/Note", "C:\\data"),
 for (const invalid of ["CON", "con.md", "NUL", "AUX.txt", "CON .txt", "COM1", "LPT9.md", "COM¹", "LPT².txt", "bad?", "bad*", "a|b", "a<b", "a\"b", "bad.", "bad ", "a\u0000b", "a\nb"]) assert.equal(isValidWindowsName(invalid), false, invalid);
 for (const valid of ["会议记录", "My Note", "COM10", "NUL-safe", "notes.md"]) assert.equal(isValidWindowsName(valid), true, valid);
 Object.defineProperty(globalThis, "navigator", { value: { platform: "Win32" }, configurable: true });
-assert.equal(currentPlatform(), "windows"); assert.equal(supportsNativePdf(), false);
+assert.equal(currentPlatform(), "windows"); assert.equal(supportsNativePdf(), true);
 Object.defineProperty(globalThis, "navigator", { value: { platform: "MacIntel" }, configurable: true });
 assert.equal(currentPlatform(), "macos"); assert.equal(supportsNativePdf(), true);
+Object.defineProperty(globalThis, "navigator", { value: { platform: "Linux" }, configurable: true });
+assert.equal(supportsNativePdf(), false);
 delete globalThis.navigator;
 const config = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf8"));
 assert.deepEqual(config.app.security.assetProtocol.scope, ["$DATA/MeteorNoteEditor/**"]);
