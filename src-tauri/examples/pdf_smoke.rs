@@ -24,6 +24,7 @@ fn main() {
     let mut context = tauri::generate_context!();
     let mut url: tauri::Url = "http://localhost:5183/scripts/pdf-smoke.html".parse().unwrap();
     url.query_pairs_mut().append_pair("output", &output);
+    if let Some(font) = std::env::args().nth(2) { url.query_pairs_mut().append_pair("font", &font); }
     context.config_mut().app.windows[0].url = tauri::WebviewUrl::External(url);
     context.config_mut().app.windows[0].title = "PDF export regression".into();
     tauri::Builder::default()

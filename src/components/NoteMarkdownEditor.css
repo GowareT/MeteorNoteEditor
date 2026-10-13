@@ -798,3 +798,5 @@
 .mn-cm-editor.is-reading .cm-lp-image-resize { display: none !important; }
 .mn-cm-editor.is-reading select { appearance: none; opacity: 1; pointer-events: none; }
 .mn-cm-editor.is-reading button:not(.cm-lp-code-copy) { pointer-events: none; }
+
+.mn-cm-editor .cm-lp-list-source-num { color: var(--mn-accent, #3375fa); font: inherit; font-variant-numeric: tabular-nums; }

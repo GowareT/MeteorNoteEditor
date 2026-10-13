@@ -226,8 +226,10 @@ export function SimpleMarkdown({
   notePath = null,
   libraryRootPath = null,
   titleMeta,
+  preserveLineSpacing = false,
 }: {
   source: string;
+  preserveLineSpacing?: boolean;
   notePath?: string | null;
   libraryRootPath?: string | null;
   titleMeta?: {
@@ -243,6 +245,7 @@ export function SimpleMarkdown({
   while (i < lines.length) {
     const line = lines[i]!;
     if (!line.trim()) {
+      if (preserveLineSpacing && i < lines.length - 1) blocks.push(<div key={`blank-${key++}`} className="mn-md-blank-line" aria-hidden="true" />);
       i += 1;
       continue;
     }
@@ -269,7 +272,7 @@ export function SimpleMarkdown({
           className={`mn-md-align is-${align}`}
           style={{ textAlign: align }}
         >
-          {body.trim() ? <SimpleMarkdown source={body} notePath={notePath} libraryRootPath={libraryRootPath} /> : <br />}
+          {body.trim() ? <SimpleMarkdown source={body} notePath={notePath} libraryRootPath={libraryRootPath} preserveLineSpacing={preserveLineSpacing} /> : <br />}
         </div>,
       );
       continue;
@@ -400,9 +403,12 @@ export function SimpleMarkdown({
     if (/^[-*+]\s+/.test(line) || /^\d+[.)]\s+/.test(line)) {
       const ordered = /^\d+[.)]\s+/.test(line);
       const items: ReactNode[] = [];
+      let markerWidth = 1;
       const itemRe = ordered ? /^\d+[.)]\s+/ : /^[-*+]\s+/;
       while (i < lines.length && itemRe.test(lines[i]!)) {
-        const raw = lines[i]!.replace(itemRe, "");
+        const marker = ordered ? /^\d+[.)]/.exec(lines[i]!)![0] : "";
+        markerWidth = Math.max(markerWidth, marker.length);
+        const raw = lines[i]!.replace(preserveLineSpacing ? /^(?:\d+[.)]|[-*+])[ \t]/ : itemRe, "");
         const taskMatch = /^\[[ xX]\]\s+/.exec(raw);
         const isTask = !!taskMatch;
         const checked = /^\[[xX]\]\s+/.test(raw);
@@ -410,10 +416,11 @@ export function SimpleMarkdown({
         items.push(
           <li
             key={`li-${key++}`}
+            data-pdf-marker={preserveLineSpacing && ordered ? marker : undefined}
             className={isTask ? `mn-md-task${checked ? " is-checked" : ""}` : undefined}
           >
             {isTask ? <span className="mn-md-taskbox" aria-hidden="true" /> : null}
-            {renderInline(content, notePath, libraryRootPath)}
+            <span className="mn-md-list-content">{renderInline(content, notePath, libraryRootPath)}</span>
           </li>,
         );
         i += 1;
@@ -423,6 +430,7 @@ export function SimpleMarkdown({
         <ListTag
           key={`list-${key++}`}
           className={`mn-md-list${ordered ? " is-ordered" : " is-bullet"}`}
+          style={preserveLineSpacing && ordered ? { "--mn-pdf-marker-width": `${markerWidth}ch` } as CSSProperties : undefined}
         >
           {items}
         </ListTag>,

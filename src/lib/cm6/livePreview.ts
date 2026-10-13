@@ -2080,6 +2080,12 @@ function buildLivePreviewDecoInner(
         if (isTaskLine) {
           return;
         }
+        if (ordered) {
+          // Keep the actual source marker in the DOM. Replacing it with a widget
+          // can display both the widget and the composing input on WebKit/IME.
+          push(entries, node.from, node.to, Decoration.mark({ class: "cm-lp-list-source-num" }));
+          return;
+        }
         push(
           entries,
           node.from,

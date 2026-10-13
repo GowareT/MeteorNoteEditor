@@ -7,6 +7,7 @@ import { flushDrafts, readNote, libraryRootPath } from "./api";
 import { resolveCodeLanguage } from "./codeHighlight";
 import "@/styles/pages.css";
 import "./pdfExport.css";
+import { settingsPrefs } from "./settingsPrefs";
 
 let exporting = false;
 const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
@@ -27,6 +28,7 @@ export async function preparePdfDocument(source: string, notePath: string, rootP
   status.setAttribute("role", "status");
   status.textContent = t("正在生成 PDF…");
   const staging = document.createElement("div");
+  staging.style.fontSize = `${Math.max(15, settingsPrefs.getEditorFontSize())}px`;
   staging.className = "mne-pdf-document mne-pdf-staging";
   host.append(staging, status);
   document.body.append(host);
@@ -40,12 +42,14 @@ export async function preparePdfDocument(source: string, notePath: string, rootP
   try {
     const languages = [...source.matchAll(/^\s*(?:`{3,}|~{3,})\s*([\w#+.-]+)/gm)].map(match => resolveCodeLanguage(match[1]));
     await bounded(Promise.all(languages.map(language => language?.load())), t("代码高亮加载超时"));
-    flushSync(() => reactRoot.render(<SimpleMarkdown source={source} notePath={notePath} libraryRootPath={rootPath} />));
+    flushSync(() => reactRoot.render(<SimpleMarkdown preserveLineSpacing source={source} notePath={notePath} libraryRootPath={rootPath} />));
     await frame();
     await frame(); await frame();
     await bounded(Promise.all(Array.from(document.fonts).filter(font => font.family.startsWith("KaTeX")).map(font => font.load())), t("公式字体加载超时"));
     await bounded(document.fonts.ready, t("字体加载超时，未生成 PDF"));
     await bounded(Promise.all(Array.from(staging.querySelectorAll("img")).map(async image => {
+      // Export staging is off-screen; lazy images may never start loading there.
+      image.loading = "eager";
       try { await image.decode(); }
       catch { throw new Error(t("图片无法加载，未生成 PDF：{0}", image.alt || t("未命名图片"))); }
     })), t("图片加载超时，请检查网络或图片路径后重试"));
