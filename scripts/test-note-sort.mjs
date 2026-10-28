@@ -10,12 +10,11 @@ const notes = [
   note("Book/B", "笔记3", "2025-01-02T00:00:00Z", "2025-01-02T00:00:00Z"),
 ];
 const ids = order => sortNotes(notes, order).map(note => note.id);
-assert.deepEqual(ids("manual"), ["Book/C", "Book/A", "Book/B"]);
-for (const order of ["created-asc", "modified-desc", "name-asc"]) assert.deepEqual(ids(order), ["Book/A", "Book/B", "Book/C"]);
+for (const order of ["manual", "created-asc", "modified-desc", "name-asc"]) assert.deepEqual(ids(order), ["Book/A", "Book/B", "Book/C"]);
 for (const order of ["created-desc", "modified-asc", "name-desc"]) assert.deepEqual(ids(order), ["Book/C", "Book/B", "Book/A"]);
 assert.deepEqual(notes.map(note => note.id), ["Book/C", "Book/A", "Book/B"], "Sorting must not mutate manual/sidebar order");
 const missing = note("Book/D", "笔记1", null, "invalid");
-for (const order of ["created-asc", "created-desc", "modified-asc", "modified-desc"]) {
+for (const order of ["manual", "created-asc", "created-desc", "modified-asc", "modified-desc"]) {
   assert.equal(sortNotes([missing, ...notes], order).at(-1).id, "Book/D");
 }
 const ties = [note("Book/Z", "Same", "2025-01-01T08:00:00+08:00"), note("Book/Y", "Same", "2025-01-01T00:00:00Z")];
@@ -30,12 +29,12 @@ writeNoteSort("modified-desc"); assert.equal(readNoteSort(), "modified-desc");
 cache.set(NOTE_SORT_KEY, "corrupt"); assert.equal(readNoteSort(), "manual");
 globalThis.localStorage = { getItem() { throw Error("unavailable"); }, setItem() { throw Error("unavailable"); } };
 assert.equal(readNoteSort(), "manual"); assert.doesNotThrow(() => writeNoteSort("name-asc"));
-console.log("Passed: creation/modification/name sorting, natural numbers, time zones, deterministic ties, missing dates, manual order and preference persistence.");
+console.log("Passed: creation/modification/name sorting, natural numbers, time zones, deterministic ties, missing dates, newest-first default and preference persistence.");
 
 const favorites = new Set(["note:Book/B", "note:Book/C", "notebook:Book", "note:Deleted"]);
-assert.deepEqual(sortNotes(notes, "manual", favorites).map(note => note.id), ["Book/C", "Book/B", "Book/A"]);
-assert.deepEqual(sortNotes(notes, "manual", new Set(["note:Book/B"])).map(note => note.id), ["Book/B", "Book/C", "Book/A"]);
-assert.deepEqual(sortNotes(notes, "manual", new Set()).map(note => note.id), ["Book/C", "Book/A", "Book/B"]);
+assert.deepEqual(sortNotes(notes, "manual", favorites).map(note => note.id), ["Book/B", "Book/C", "Book/A"]);
+assert.deepEqual(sortNotes(notes, "manual", new Set(["note:Book/B"])).map(note => note.id), ["Book/B", "Book/A", "Book/C"]);
+assert.deepEqual(sortNotes(notes, "manual", new Set()).map(note => note.id), ["Book/A", "Book/B", "Book/C"]);
 assert.deepEqual(sortNotes(notes, "name-asc", favorites).map(note => note.id), ["Book/A", "Book/B", "Book/C"]);
 assert.deepEqual(notes.map(note => note.id), ["Book/C", "Book/A", "Book/B"]);
-console.log("Passed: favorites first in default order, stable order within groups, removing favorites and explicit sort preservation.");
+console.log("Passed: favorites first with newest-first order within groups, removing favorites and explicit sort preservation.");

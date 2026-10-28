@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+const bundled=await build({entryPoints:['src/lib/clipboardImage.ts'],bundle:true,write:false,format:'esm',platform:'node'});
+const {clipboardImageFile,readClipboardImage}=await import(`data:text/javascript;base64,${Buffer.from(bundled.outputFiles[0].text).toString('base64')}`);
+const image=new File(['image'], 'screenshot.png', {type:'image/png'});
+assert.equal(clipboardImageFile(null),null);
+assert.equal(clipboardImageFile({items:[{kind:'string',type:'text/plain'}],files:[]}),null);
+assert.equal(clipboardImageFile({items:[{kind:'string',type:'text/html'},{kind:'file',type:'image/png',getAsFile:()=>image}],files:[]}),image);
+assert.equal(clipboardImageFile({items:[],files:[image]}),image);
+Object.defineProperty(globalThis,'navigator',{configurable:true,value:{clipboard:{read:async()=>[{types:['text/plain','image/png'],getType:async()=>new Blob(['image'],{type:'image/png'})}]}}});
+assert.equal((await readClipboardImage()).name,'clipboard.png');
+Object.defineProperty(globalThis,'navigator',{configurable:true,value:{clipboard:{read:async()=>[{types:['text/plain']}]}}});
+assert.equal(await readClipboardImage(),null);
+Object.defineProperty(globalThis,'navigator',{configurable:true,value:{clipboard:{}}});
+assert.equal(await readClipboardImage(),null);
+delete globalThis.navigator;
+console.log('Passed: clipboard image items/files, text fallback, rich clipboard image priority and native-event-only WebViews.');

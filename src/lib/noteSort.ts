@@ -2,7 +2,8 @@ import { getLocale, t } from "@/lib/i18n";
 import type { LibraryNote } from "@/types/library";
 
 export const NOTE_SORT_OPTIONS = [
-  { value: "manual", get label() { return t("默认顺序"); } },
+  // Keep the stored value compatible with existing default-sort preferences.
+  { value: "manual", get label() { return t("默认：最新在前"); } },
   { value: "modified-desc", get label() { return t("修改时间：最新在前"); } },
   { value: "modified-asc", get label() { return t("修改时间：最早在前"); } },
   { value: "created-desc", get label() { return t("创建时间：最新在前"); } },
@@ -35,13 +36,13 @@ function timestamp(value?: string | null): number | null {
 export function sortNotes(notes: readonly LibraryNote[], order: NoteSort, favoriteKeys: ReadonlySet<string> = new Set()): LibraryNote[] {
   const names = new Intl.Collator(getLocale(), { numeric: true, sensitivity: "base" });
   const result = [...notes];
-  if (order === "manual") {
-    // Stable partition preserves the manual order within both groups.
-    return [...result.filter(note => favoriteKeys.has(`note:${note.id}`)),
-      ...result.filter(note => !favoriteKeys.has(`note:${note.id}`))];
-  }
-  const direction = order.endsWith("-desc") ? -1 : 1;
+  const isDefault = order === "manual";
+  const direction = isDefault || order.endsWith("-desc") ? -1 : 1;
   return result.sort((a, b) => {
+    if (isDefault) {
+      const byFavorite = Number(favoriteKeys.has(`note:${b.id}`)) - Number(favoriteKeys.has(`note:${a.id}`));
+      if (byFavorite) return byFavorite;
+    }
     const byName = names.compare(a.title, b.title);
     const tie = byName || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
     if (order.startsWith("name-")) return byName * direction || tie;

@@ -190,3 +190,17 @@ assert.equal(hiddenDraft.draft, "unsaved draft");
 await deletedSessions.save("Book/Dirty");
 assert.equal(hiddenDraft.base, "unsaved draft");
 console.log("Passed: missing-note alert dismissal, preserved drafts, repeated polls, reopening alerts and original-note restoration.");
+
+let cacheWrites = 0, notifications = 0;
+const noDuplicateStage = new DocumentSessions({read:async()=>"old",write:async()=>{}},()=>{cacheWrites++;});
+await noDuplicateStage.open("Book/Note");
+noDuplicateStage.subscribe(()=>{notifications++;});
+cacheWrites = 0;
+noDuplicateStage.stage("Book/Note", "new");
+noDuplicateStage.stage("Book/Note", "new");
+assert.equal(cacheWrites, 1, "Same draft must not synchronously serialize and write recovery twice");
+assert.equal(notifications, 1, "Same draft must not notify all components twice");
+noDuplicateStage.stage("Book/Note", "newer");
+assert.equal(cacheWrites, 2, "Each genuine edit remains immediately persisted for crash recovery");
+assert.equal(noDuplicateStage.documents.get("Book/Note").draft, "newer");
+console.log("Passed: duplicate staging skips recovery writes and notifications; genuine edits remain immediately protected.");

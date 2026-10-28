@@ -987,7 +987,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setDraft: (text) => {
     const path = get().notePath;
     if (path) api.stageDraft(path, text);
-    set({ noteDraft: text });
+    if (get().noteDraft !== text) set({ noteDraft: text });
   },
 
   saveDraft: async () => {

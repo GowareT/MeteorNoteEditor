@@ -521,6 +521,12 @@
   background: color-mix(in srgb, var(--mn-text) 2.5%, transparent);
 }
 
+.mn-cm-editor .cm-line.cm-lp-quote-last {
+  /* Count the gap in CodeMirror's line height, keeping later hit tests aligned. */
+  border-bottom: 0.75em solid transparent;
+  background-clip: padding-box;
+}
+
 .mn-cm-editor .cm-line.cm-lp-callout {
   --mn-callout-bg: #fff6d6;
   min-height: 1.72em;

@@ -496,6 +496,19 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
       ".cm-lp-table-wrap--editable": {
         overflow: "visible",
       },
+      ".cm-lp-table-wrap:focus": { outline: "none" },
+      ".cm-lp-table-controls": {
+        display: "flex", justifyContent: "flex-end", gap: "8px", paddingBottom: "6px",
+      },
+      ".cm-lp-table-controls button": {
+        font: "inherit", fontSize: "12px", color: "var(--mn-text-muted)",
+        background: "transparent", border: "1px solid color-mix(in srgb, var(--mn-text) 12%, transparent)",
+        borderRadius: "5px", padding: "3px 8px", cursor: "pointer",
+      },
+      ".cm-lp-table-controls button:hover, .cm-lp-table-controls button:focus-visible": {
+        color: "var(--mn-accent)", background: "color-mix(in srgb, var(--mn-accent) 7%, transparent)",
+      },
+      ".cm-lp-table-controls button:disabled": {opacity: "0.45", cursor: "default"},
       ".cm-lp-table-wrap--editable.is-invalid": {
         whiteSpace: "pre-wrap",
         padding: "0.8em 0.9em",
@@ -841,6 +854,10 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
         borderRadius: "8px",
         background:
           "color-mix(in srgb, var(--mn-text) 18%, transparent)",
+      },
+      ".cm-lp-quote-last": {
+        borderBottom: "0.75em solid transparent",
+        backgroundClip: "padding-box",
       },
       ".cm-lp-callout": {
         "--mn-callout-bg": "#fff6d6",

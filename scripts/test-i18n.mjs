@@ -24,7 +24,7 @@ let changes=0;const unsubscribe=subscribeLocale(()=>changes++);
 setLocale('en');assert.equal(getLocale(),'en');assert.equal(document.documentElement.lang,'en');assert.equal(values.get(LANGUAGE_KEY),'en');assert.equal(changes,1);
 assert.equal(t('{0} 篇笔记',1),'1 note');assert.equal(t('{0} 篇笔记',2),'2 notes');
 assert.equal(t('设置'),'Settings');assert.equal(t('__proto__'),'__proto__');assert.equal(t('constructor'),'constructor');
-assert.equal(APPEARANCE_OPTIONS[0].label,'System');assert.equal(NOTE_SORT_OPTIONS[0].label,'Manual order');
+assert.equal(APPEARANCE_OPTIONS[0].label,'System');assert.equal(NOTE_SORT_OPTIONS[0].label,'Default: newest first');
 assert.equal(t('已导入 {0} 篇笔记到「{1}」',2,'资料/中文笔记'),'Imported 2 notes into “资料/中文笔记”');
 assert.equal(errorMessage('图片不存在：图片'),'The image does not exist: 图片');
 assert.equal(errorMessage(new Error('笔记本不存在')),'The notebook does not exist.');
@@ -34,7 +34,7 @@ assert.match(errorMessage('CONFLICT: 笔记已被其他窗口或软件修改，�
 const editor={state:EditorState.create({doc:''}),focus(){},dispatch(spec){this.state=this.state.update(spec).state;}};
 applyFormat(editor,{type:'insert',kind:'table'});assert.match(editor.state.doc.toString(),/Column 1/);assert.doesNotMatch(editor.state.doc.toString(),/[\u4e00-\u9fff]/);
 fail=true;assert.throws(()=>setLocale('zh-CN'),/Storage full/);assert.equal(getLocale(),'en');fail=false;
-values.set(LANGUAGE_KEY,'zh-CN');events.get('storage')({key:LANGUAGE_KEY});assert.equal(getLocale(),'zh-CN');assert.equal(APPEARANCE_OPTIONS[0].label,'跟随系统');assert.equal(NOTE_SORT_OPTIONS[0].label,'默认顺序');
+values.set(LANGUAGE_KEY,'zh-CN');events.get('storage')({key:LANGUAGE_KEY});assert.equal(getLocale(),'zh-CN');assert.equal(APPEARANCE_OPTIONS[0].label,'跟随系统');assert.equal(NOTE_SORT_OPTIONS[0].label,'默认：最新在前');
 unsubscribe();const last=changes;setLocale('en');assert.equal(changes,last);
 // A reload uses the stored language, including defensive fallback for invalid data.
 delete globalThis.document;

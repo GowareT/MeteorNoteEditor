@@ -2,7 +2,8 @@ import { t } from "@/lib/i18n";
 import { syntaxTree } from "@codemirror/language";
 import { EditorSelection, StateField, EditorState } from "@codemirror/state";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, isolateHistory } from "@codemirror/commands";
+import { cellInRange, tableCellRange, type CellPosition, type CellRange } from "./tableSelection";
 import { applyFormat as applyInlineFormat, detectFormatMarksAtSelection } from "./mdFormat";
 import { CODE_LANGUAGE_OPTIONS, resolveCodeLanguage } from "@/lib/codeHighlight";
 import {
@@ -400,7 +401,7 @@ function pushInlinePairMarks(
   raw: string,
   delimiter: string,
   className: string,
-  claimedRanges: FenceRange[],
+  claimedRanges: Set<string>,
 ) {
   let index = 0;
   while (index < raw.length) {
@@ -436,7 +437,7 @@ function pushInlinePairMarks(
       const to = lineFrom + close + delimiter.length;
       // Only an identical parsed range owns this delimiter pair. A containing
       // bold/italic/strike node must not suppress a nested fallback format.
-      if (claimedRanges.some((range) => range.from === from && range.to === to)) {
+      if (claimedRanges.has(`${from}:${to}`)) {
         index = close + delimiter.length;
         continue;
       }
@@ -448,9 +449,9 @@ function pushInlinePairMarks(
         lineFrom + innerTo,
         Decoration.mark({ class: className }),
       );
-      claimedRanges.push({ from, to, closed: true });
+      claimedRanges.add(`${from}:${to}`);
       if (delimiter === "***" || delimiter === "___") {
-        claimedRanges.push({ from: from + 1, to: to - 1, closed: true });
+        claimedRanges.add(`${from + 1}:${to - 1}`);
       }
     }
     index = close + delimiter.length;
@@ -495,15 +496,15 @@ function collectInlineHtmlTagRanges(raw: string, tag: string) {
   return ranges;
 }
 
-function parsedInlineFormatRanges(state: EditorState): FenceRange[] {
-  const ranges: FenceRange[] = [];
+function parsedInlineFormatRanges(state: EditorState): Set<string> {
+  const ranges = new Set<string>();
   syntaxTree(state).iterate({
     enter(node) {
       if (
         node.name === "StrongEmphasis" ||
         node.name === "Emphasis"
       ) {
-        ranges.push({ from: node.from, to: node.to, closed: true });
+        ranges.add(`${node.from}:${node.to}`);
       }
     },
   });
@@ -538,14 +539,17 @@ class TableWidget extends WidgetType {
 
   updateDOM(dom: HTMLElement, view: EditorView) {
     const previous = (dom as HTMLElement & { mnTableWidget?: TableWidget }).mnTableWidget;
-    if (!previous || previous.from !== this.from ||
-        previous.pendingRaw !== view.state.doc.sliceString(this.from, this.to)) return false;
+    if (!previous) return false;
+    const unchanged = previous.raw === this.raw && JSON.stringify(previous.meta) === JSON.stringify(this.meta);
+    const ownEdit = previous.from === this.from && previous.pendingRaw === view.state.doc.sliceString(this.from, this.to);
+    if (!unchanged && !ownEdit) return false;
     this.cellViews = previous.cellViews;
     this.timers = previous.timers;
     this.activeTarget = previous.activeTarget;
     this.outsideActionsCleanup = previous.outsideActionsCleanup;
     this.rebind = previous.rebind;
     this.rebind?.(this);
+    dom.dataset.tableFrom = String(this.from);
     (dom as HTMLElement & { mnTableWidget?: TableWidget }).mnTableWidget = this;
     return true;
   }
@@ -558,6 +562,8 @@ class TableWidget extends WidgetType {
     wrap.dataset.tableFrom = String(widget.from);
     (wrap as HTMLElement & { mnTableWidget?: TableWidget }).mnTableWidget = this;
     wrap.setAttribute("contenteditable", "false");
+    wrap.tabIndex = 0;
+    wrap.setAttribute("aria-label", t("表格"));
 
     const model = createTableModel(widget.raw);
     if (!model) {
@@ -571,6 +577,10 @@ class TableWidget extends WidgetType {
 
     const meta = structuredClone(widget.meta ?? {}) as TableMeta;
     let selected: { row: number; col: number } | null = null;
+    let cellRange: CellRange | null = null;
+    let drag: { anchor: CellPosition; extended: boolean } | null = null;
+    let applyingRangeFormat = false;
+    let updateMergeControl = () => {};
     const writeCellValue = (row: number, col: number, value: string) => {
       if (row === 0) model.header[col] = normalizeTableCellValue(value);
       else model.rows[row - 1]![col] = normalizeTableCellValue(value);
@@ -621,11 +631,12 @@ class TableWidget extends WidgetType {
     };
 
     const commit = (restoreFocus = true, reuseDOM = true) => {
+      if (view.state.readOnly) return;
       if ([...widget.cellViews.values()].some((editor) => editor.composing)) return;
       const nextRaw = serializeTableBlock(model, normalizeTableMetaForSave(model, meta));
       if (nextRaw === view.state.doc.sliceString(widget.from, widget.to)) return;
       const focused = selected ? widget.cellViews.get(cellKey(selected.row, selected.col)) : null;
-      const focusState = restoreFocus && focused && selected
+      const focusState = restoreFocus && !cellRange && focused && selected
         ? { ...selected, start: focused.state.selection.main.from, end: focused.state.selection.main.to }
         : null;
       widget.pendingRaw = reuseDOM ? nextRaw : null;
@@ -667,6 +678,7 @@ class TableWidget extends WidgetType {
     const clearVisualSelection = () => {
       grid.querySelectorAll(".is-selected").forEach((el) => {
         el.classList.remove("is-selected");
+        el.removeAttribute("aria-selected");
       });
     };
 
@@ -679,7 +691,7 @@ class TableWidget extends WidgetType {
       const target = event.target;
       if (
         target instanceof Element &&
-        grid.contains(target) &&
+        wrap.contains(target) &&
         target.closest(".cm-lp-table-actions, .cm-lp-table-cell-trigger")
       ) {
         return;
@@ -691,9 +703,11 @@ class TableWidget extends WidgetType {
       ) {
         return;
       }
-      if (!(target instanceof Node) || !grid.contains(target)) {
+      if (!(target instanceof Node) || !wrap.contains(target)) {
         clearVisualSelection();
         selected = null;
+        cellRange = null;
+        updateMergeControl();
         if (widget.activeTarget) {
           clearActiveEditorToolbarTarget(widget.activeTarget);
           widget.activeTarget = null;
@@ -702,13 +716,144 @@ class TableWidget extends WidgetType {
       }
     };
     window.addEventListener("mousedown", closeActionsOnOutsideMouseDown, true);
+    const onSelectionMove = (event: MouseEvent) => {
+      if (!drag || !(event.buttons & 1)) return;
+      const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLTableCellElement>("[data-cell]");
+      if (!target || !grid.contains(target)) return;
+      const head = parseCellKey(target.dataset.cell ?? "");
+      if (!head || (!drag.extended && head.row === drag.anchor.row && head.col === drag.anchor.col)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      drag.extended = true;
+      selectRange(drag.anchor, head);
+    };
+    const onSelectionUp = () => { drag = null; };
+    window.addEventListener("mousemove", onSelectionMove, {capture: true, passive: false});
+    window.addEventListener("mouseup", onSelectionUp, true);
+    window.addEventListener("blur", onSelectionUp);
     widget.outsideActionsCleanup = () => {
       window.removeEventListener(
         "mousedown",
         closeActionsOnOutsideMouseDown,
         true,
       );
+      window.removeEventListener("mousemove", onSelectionMove, true);
+      window.removeEventListener("mouseup", onSelectionUp, true);
+      window.removeEventListener("blur", onSelectionUp);
     };
+
+    const selectRange = (anchor: CellPosition, head: CellPosition) => {
+      closeCellActions();
+      cellRange = tableCellRange(anchor, head, Array.from(grid.querySelectorAll<HTMLTableCellElement>("[data-cell]"), cell => ({
+        ...parseCellKey(cell.dataset.cell!)!, rowSpan: cell.rowSpan, colSpan: cell.colSpan,
+      })));
+      clearVisualSelection();
+      for (const cell of grid.querySelectorAll<HTMLTableCellElement>("[data-cell]")) {
+        if (!cellInRange(parseCellKey(cell.dataset.cell!)!, cellRange)) continue;
+        cell.classList.add("is-selected");
+        cell.setAttribute("aria-selected", "true");
+      }
+      // Focus the table so Delete/Backspace cannot edit the original cell instead.
+      wrap.focus({preventScroll: true});
+      window.getSelection()?.removeAllRanges();
+      updateMergeControl();
+    };
+    const selectTable = () => {
+      if (!selected) selectCell(0, 0);
+      selectRange({row: 0, col: 0}, {row: model.rows.length, col: model.header.length - 1});
+    };
+    const canMergeSelection = () => Boolean(cellRange &&
+      (cellRange.bottom > cellRange.top || cellRange.right > cellRange.left) &&
+      // HTML row spans cannot cross the table header/body boundary.
+      !(cellRange.top === 0 && cellRange.bottom > 0) &&
+      grid.querySelectorAll("[data-cell].is-selected").length > 1);
+    const mergeSelection = () => {
+      if (view.state.readOnly || !cellRange || !canMergeSelection() ||
+          [...widget.cellViews.values()].some(editor => editor.composing)) return;
+      const range = {...cellRange};
+      clearPendingCommits();
+      commit(false);
+      const contents: string[] = [];
+      for (let row = range.top; row <= range.bottom; row++) {
+        for (let col = range.left; col <= range.right; col++) {
+          const content = row === 0 ? model.header[col] : model.rows[row - 1]![col];
+          if (content) contents.push(content);
+          writeCellValue(row, col, "");
+          const style = getCellMeta(meta, row, col);
+          clearSpanFields(style);
+          style.hidden = true;
+        }
+      }
+      const anchor = getCellMeta(meta, range.top, range.left);
+      delete anchor.hidden;
+      anchor.rowSpan = range.bottom - range.top + 1;
+      anchor.colSpan = range.right - range.left + 1;
+      writeCellValue(range.top, range.left, contents.join("\n"));
+      const nextRaw = serializeTableBlock(model, sanitizeTableMeta(meta));
+      widget.pendingRaw = null;
+      view.dispatch({changes: {from: widget.from, to: widget.to, insert: nextRaw},
+        annotations: isolateHistory.of("full"), userEvent: "input", effects: view.scrollSnapshot()});
+      restoreFocusedCell({row: range.top, col: range.left, start: 0, end: 0});
+    };
+    const deleteTable = () => {
+      if (view.state.readOnly || [...widget.cellViews.values()].some(editor => editor.composing)) return;
+      clearPendingCommits();
+      // Keep recent typing in the undo history before removing the entire block.
+      commit(false);
+      const from = widget.from;
+      view.dispatch({changes: {from, to: widget.to}, selection: EditorSelection.cursor(from),
+        annotations: isolateHistory.of("full"), userEvent: "delete.selection"});
+      view.focus();
+    };
+    const deleteSelection = () => {
+      if (!cellRange || view.state.readOnly || [...widget.cellViews.values()].some(editor => editor.composing)) return;
+      if (cellRange.top === 0 && cellRange.left === 0 && cellRange.bottom === model.rows.length && cellRange.right === model.header.length - 1) {
+        deleteTable();
+        return;
+      }
+      clearPendingCommits();
+      commit(false);
+      for (let row = cellRange.top; row <= cellRange.bottom; row++) {
+        for (let col = cellRange.left; col <= cellRange.right; col++) writeCellValue(row, col, "");
+      }
+      const nextRaw = serializeTableBlock(model, sanitizeTableMeta(meta));
+      widget.pendingRaw = null;
+      view.dispatch({changes: {from: widget.from, to: widget.to, insert: nextRaw},
+        annotations: isolateHistory.of("full"), userEvent: "delete.selection", effects: view.scrollSnapshot()});
+      view.focus();
+    };
+    wrap.addEventListener("mousedown", event => {
+      if (event.button !== 0 || !(event.target instanceof Element) ||
+          event.target.closest("button, .cm-lp-table-resize, .cm-lp-table-actions")) return;
+      const cell = event.target.closest<HTMLTableCellElement>("[data-cell]");
+      if (!cell || !grid.contains(cell)) return;
+      const head = parseCellKey(cell.dataset.cell!);
+      if (!head) return;
+      if (event.shiftKey && selected && (cellRange || selected.row !== head.row || selected.col !== head.col)) {
+        event.preventDefault();
+        event.stopPropagation();
+        selectRange(selected, head);
+        return;
+      }
+      selectCell(head.row, head.col);
+      drag = {anchor: head, extended: false};
+    }, true);
+    wrap.addEventListener("keydown", event => {
+      if (event.isComposing) return;
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "a") {
+        const editor = selected ? widget.cellViews.get(cellKey(selected.row, selected.col)) : null;
+        // First Mod-A selects text in a cell; a second selects the whole table.
+        if (!cellRange && editor?.hasFocus && (editor.state.selection.main.from !== 0 || editor.state.selection.main.to !== editor.state.doc.length)) return;
+        event.preventDefault(); event.stopPropagation(); selectTable();
+      } else if (cellRange && (event.key === "Backspace" || event.key === "Delete")) {
+        event.preventDefault(); event.stopPropagation(); deleteSelection();
+      } else if (cellRange && event.key === "Escape") {
+        event.preventDefault(); event.stopPropagation();
+        const anchor = selected ?? {row: 0, col: 0};
+        selectCell(anchor.row, anchor.col);
+        widget.cellViews.get(cellKey(anchor.row, anchor.col))?.focus();
+      }
+    }, true);
 
     const mergeCellRight = (row: number, col: number) => {
       if (isCoveredCell(meta, row, col)) return;
@@ -804,7 +949,7 @@ class TableWidget extends WidgetType {
       trigger.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        selectCell(row, col);
+        if (!cellRange || !cellInRange({row, col}, cellRange)) selectCell(row, col);
         const existing = cellEl.querySelector(".cm-lp-table-actions");
         closeCellActions();
         if (existing) return;
@@ -835,41 +980,58 @@ class TableWidget extends WidgetType {
         const style = readCellMeta(meta, row, col);
         const width = style?.colSpan ?? 1;
         const height = style?.rowSpan ?? 1;
+        addAction(t("合并所选单元格"), mergeSelection, !canMergeSelection());
         addAction(t("向右合并"), () => mergeCellRight(row, col), col + width >= model.header.length);
         addAction(t("向下合并"), () => mergeCellDown(row, col), row + height >= model.rows.length + 1);
         addAction(t("取消合并"), () => splitCell(row, col), !style?.colSpan && !style?.rowSpan);
         addAction(t("删除行"), () => deleteRow(row), row === 0 || model.rows.length <= 1);
         addAction(t("删除列"), () => deleteCol(col), model.header.length <= 1);
+        addAction(t("全选表格"), selectTable);
+        addAction(t("删除表格"), deleteTable);
         cellEl.appendChild(panel);
       });
       cellEl.appendChild(trigger);
     };
 
     const selectCell = (row: number, col: number) => {
+      if (applyingRangeFormat) return;
       selected = { row, col };
+      cellRange = null;
+      updateMergeControl();
       clearVisualSelection();
       grid
         .querySelector(`[data-cell="${cellKey(row, col)}"]`)
         ?.classList.add("is-selected");
       widget.activeTarget = {
         applyFormat: (command) => {
-          if (!selected) return;
-          const cell = getCellMeta(meta, selected.row, selected.col);
-          const editor = widget.cellViews.get(cellKey(selected.row, selected.col));
-          if (!editor) return;
-          if (command.type === "align") {
-            cell.align = command.align;
-            editor.dom.style.textAlign = command.align;
-            grid.querySelector<HTMLElement>(`[data-cell="${cellKey(selected.row, selected.col)}"]`)!.style.textAlign = command.align;
-            editor.requestMeasure();
-          } else if (["bold", "italic", "underline", "strike", "highlight", "color", "clear", "paint"].includes(command.type)) {
-            if (editor.state.selection.main.empty) {
-              editor.dispatch({ selection: EditorSelection.range(0, editor.state.doc.length) });
+          if (!selected || view.state.readOnly) return;
+          if (command.type !== "align" && !["bold", "italic", "underline", "strike", "highlight", "color", "clear", "paint"].includes(command.type)) return;
+          const range = cellRange;
+          const targets = range
+            ? [...widget.cellViews.keys()].map(key => parseCellKey(key)!).filter(cell => cellInRange(cell, range))
+            : [selected];
+          applyingRangeFormat = Boolean(range);
+          try {
+            for (const target of targets) {
+              const cell = getCellMeta(meta, target.row, target.col);
+              const editor = widget.cellViews.get(cellKey(target.row, target.col));
+              if (!editor) continue;
+              if (command.type === "align") {
+                cell.align = command.align;
+                editor.dom.style.textAlign = command.align;
+                grid.querySelector<HTMLElement>(`[data-cell="${cellKey(target.row, target.col)}"]`)!.style.textAlign = command.align;
+                editor.requestMeasure();
+              } else {
+                if (range || editor.state.selection.main.empty) {
+                  editor.dispatch({ selection: EditorSelection.range(0, editor.state.doc.length) });
+                }
+                applyInlineFormat(editor, command);
+              }
             }
-            applyInlineFormat(editor, command);
-          } else return;
+          } finally { applyingRangeFormat = false; }
           clearPendingCommits();
           commit();
+          if (range) wrap.focus({preventScroll: true});
           emitEditorFormatChanged(widget.activeTarget?.getFormatMarks() ?? {});
         },
         insertImage: () => {},
@@ -960,7 +1122,6 @@ class TableWidget extends WidgetType {
           });
           editor.dom.style.textAlign = align;
           widget.cellViews.set(cellKey(row, col), editor);
-          cell.addEventListener("mousedown", () => selectCell(row, col));
           cell.appendChild(resizeHandle("col", col, row));
           cell.appendChild(resizeHandle("row", col, row));
           if (row === 0) cell.appendChild(addCellButton("col", col));
@@ -1091,7 +1252,29 @@ class TableWidget extends WidgetType {
     };
 
     renderBody();
-    wrap.addEventListener("mouseleave", clearVisualSelection);
+    const controls = document.createElement("div");
+    controls.className = "cm-lp-table-controls";
+    const mergeButton = document.createElement("button");
+    mergeButton.type = "button";
+    mergeButton.textContent = t("合并所选单元格");
+    mergeButton.addEventListener("mousedown", event => event.preventDefault());
+    mergeButton.addEventListener("click", mergeSelection);
+    updateMergeControl = () => {
+      mergeButton.disabled = !canMergeSelection();
+      mergeButton.title = cellRange?.top === 0 && cellRange.bottom > 0
+        ? t("表头和正文单元格请分别合并") : t("选择多个单元格后合并，保留所有内容");
+    };
+    updateMergeControl();
+    controls.append(mergeButton);
+    for (const [label, action] of [[t("全选表格"), selectTable], [t("删除表格"), deleteTable]] as const) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      button.addEventListener("mousedown", event => event.preventDefault());
+      button.addEventListener("click", action);
+      controls.append(button);
+    }
+    if (!view.state.readOnly) wrap.append(controls);
     wrap.appendChild(grid);
     return wrap;
   }
@@ -1213,6 +1396,7 @@ class TaskCheckboxWidget extends WidgetType {
 }
 
 class InlineImageWidget extends WidgetType {
+  private rebind: ((next: InlineImageWidget) => void) | null = null;
   constructor(
     readonly rawAlt: string,
     readonly src: string,
@@ -1235,9 +1419,22 @@ class InlineImageWidget extends WidgetType {
     );
   }
 
+  updateDOM(dom: HTMLElement) {
+    const previous = (dom as HTMLElement & {mnImageWidget?: InlineImageWidget}).mnImageWidget;
+    if (!previous || previous.rawAlt !== this.rawAlt || previous.src !== this.src || previous.rawDest !== this.rawDest) return false;
+    this.rebind = previous.rebind;
+    this.rebind?.(this);
+    dom.classList.toggle("is-selected", this.selected);
+    (dom as HTMLElement & {mnImageWidget?: InlineImageWidget}).mnImageWidget = this;
+    return true;
+  }
+
   toDOM(view: EditorView) {
+    let widget: InlineImageWidget = this;
+    this.rebind = next => { widget = next; };
     const parsed = parseImageSettings(this.rawAlt);
     const wrap = document.createElement("span");
+    (wrap as HTMLElement & {mnImageWidget?: InlineImageWidget}).mnImageWidget = this;
     wrap.className = `cm-lp-image-wrap${this.selected ? " is-selected" : ""}`;
     wrap.setAttribute("contenteditable", "false");
 
@@ -1262,10 +1459,10 @@ class InlineImageWidget extends WidgetType {
     img.onerror = () => { error.hidden = false; view.requestMeasure(); };
     img.src = this.src;
     const save = (settings: ImageSettings) => {
-      if (!view.dom.isConnected || this.to > view.state.doc.length || view.state.doc.sliceString(this.from, this.to) !== `![${this.rawAlt}](${this.rawDest})`) return;
-      const insert = `![${imageAlt(settings)}](${this.rawDest})`;
-      view.dispatch({ changes: { from: this.from, to: this.to, insert },
-        selection: EditorSelection.range(this.from, this.from + insert.length),
+      if (view.state.readOnly || !view.dom.isConnected || widget.to > view.state.doc.length || view.state.doc.sliceString(widget.from, widget.to) !== `![${widget.rawAlt}](${widget.rawDest})`) return;
+      const insert = `![${imageAlt(settings)}](${widget.rawDest})`;
+      view.dispatch({ changes: { from: widget.from, to: widget.to, insert },
+        selection: EditorSelection.range(widget.from, widget.from + insert.length),
         effects: view.scrollSnapshot(), scrollIntoView: false });
     };
     const actions = document.createElement("span");
@@ -1320,7 +1517,7 @@ class InlineImageWidget extends WidgetType {
       event.preventDefault();
       event.stopPropagation();
       view.dispatch({
-        selection: EditorSelection.range(this.from, this.to),
+        selection: EditorSelection.range(widget.from, widget.to),
       });
       view.focus();
     });
@@ -2126,7 +2323,12 @@ function buildLivePreviewDecoInner(
       }
 
       if (MARK_NODES.has(name)) {
-        if (name === "URL" && parentNodeName(node) === "Autolink") return;
+        // GFM bare URLs are URL nodes directly inside text, not Autolink nodes.
+        // Only a Markdown link's destination is syntax that should be hidden.
+        if (name === "URL" && !["Link", "LinkReference"].includes(parentNodeName(node))) {
+          push(entries, node.from, node.to, Decoration.mark({ class: "cm-lp-link" }));
+          return;
+        }
         push(entries, node.from, node.to, hideMark);
         return;
       }
@@ -2268,7 +2470,7 @@ function buildLivePreviewDecoInner(
           line.from,
           line.from,
           Decoration.line({
-            class: isCalloutLine ? calloutClasses : "cm-lp-quote",
+            class: isCalloutLine ? calloutClasses : `cm-lp-quote${!nextLine || !/^\s*>\s?/.test(nextLine.text) || nextCalloutHead ? " cm-lp-quote-last" : ""}`,
             attributes: isCalloutLine
               ? { style: `--mn-callout-bg:${activeCalloutColor};` }
               : undefined,
@@ -2452,7 +2654,12 @@ export function livePreviewExtension(
       return buildLivePreviewDeco(state, notePath, libraryRootPath, inlineOnly);
     },
     update(deco, tr) {
-      if (tr.docChanged || tr.selection) {
+      if (tr.docChanged) return buildLivePreviewDeco(tr.state, notePath, libraryRootPath, inlineOnly);
+      if (tr.selection) {
+        const before = tr.startState.selection.main, after = tr.state.selection.main;
+        // Caret-only motion on the same line cannot change active-line or image selection decorations.
+        if (before.empty && after.empty && tr.startState.readOnly === tr.state.readOnly &&
+            tr.startState.doc.lineAt(before.head).number === tr.state.doc.lineAt(after.head).number) return deco;
         return buildLivePreviewDeco(tr.state, notePath, libraryRootPath, inlineOnly);
       }
       return deco;

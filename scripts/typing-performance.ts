@@ -1,0 +1,32 @@
+import {EditorState, EditorSelection} from '@codemirror/state';
+import {EditorView} from '@codemirror/view';
+import {markdown} from '@codemirror/lang-markdown';
+import {livePreviewExtension} from '../src/lib/cm6/livePreview';
+import {meteorNoteEditorTheme} from '../src/lib/cm6/theme';
+import '../src/components/NoteMarkdownEditor.css';
+import '../src/styles/tokens.css';
+const field = livePreviewExtension();
+const doc = ['正文用于移动光标和输入测试。',...Array.from({length:1500},(_,i)=>i%30===0 ? `## 第 ${i} 节` : `第 ${i} 行：这是一段长文档测试，保留 Markdown 格式、换行及光标位置。`)].join('\n');
+const view=new EditorView({parent:document.querySelector('#fixture')!,state:EditorState.create({doc,extensions:[markdown(),field,meteorNoteEditorTheme(15,false),EditorView.lineWrapping]})});
+const failures:string[]=[];
+const initial=view.state.field(field);
+const start=performance.now();
+for(let i=0;i<100;i++) view.dispatch({selection:EditorSelection.cursor(i%10)});
+const cursorMs=performance.now()-start;
+if(view.state.field(field)!==initial) failures.push('Same-line cursor motion rebuilt full-document decorations');
+view.dispatch({selection:EditorSelection.cursor(view.state.doc.line(2).from)});
+if(view.state.field(field)===initial) failures.push('Cross-line cursor motion failed to update decorations');
+const crossLine=view.state.field(field);
+view.dispatch({selection:EditorSelection.range(0,12)});
+if(view.state.field(field)===crossLine) failures.push('A text selection failed to update selection decorations');
+view.dispatch({selection:EditorSelection.cursor(view.state.doc.length)});
+const timings:number[]=[];
+for(let i=0;i<20;i++){
+ const t=performance.now(), pos=view.state.doc.length;
+ view.dispatch({changes:{from:pos,insert:'字'},selection:EditorSelection.cursor(pos+1)});
+ timings.push(performance.now()-t);
+}
+if(view.state.doc.toString()!==doc+'字'.repeat(20)) failures.push('Typing changed or lost source text');
+timings.sort((a,b)=>a-b);
+const report={passed:failures.length===0,lines:view.state.doc.lines,cursor100Ms:Math.round(cursorMs),typingMedianMs:Math.round(timings[10]!),typingMaxMs:Math.round(timings.at(-1)!),failures};
+document.querySelector('#result')!.textContent=JSON.stringify(report,null,2);

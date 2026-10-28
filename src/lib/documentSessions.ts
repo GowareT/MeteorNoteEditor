@@ -38,6 +38,7 @@ export class DocumentSessions {
   stage(path: string, draft: string) {
     const session = this.documents.get(path);
     if (!session) throw new Error("笔记尚未加载，不能保存");
+    if (session.draft === draft) return;
     session.draft = draft;
     this.changed();
   }

@@ -241,10 +241,10 @@ export function NoteEditorView({ path, detached = false, }: {
         if (!detached && !noteContentReady)
             return;
         const content = ensureLeadingTitle(next, title);
-        api.stageDraft(path, content);
+        if (detached) api.stageDraft(path, content);
         setDraftRaw(content);
     }, [detached, noteContentReady, path, setDraftRaw, title]);
-    const outlineHeadings = useMemo(() => parseOutlineHeadings(draft), [draft]);
+    const outlineHeadings = useMemo(() => outlineOpen ? parseOutlineHeadings(draft) : [], [draft, outlineOpen]);
     useEffect(() => {
         if (!noteContentReady) return;
         const reveal = () => {
@@ -319,7 +319,10 @@ export function NoteEditorView({ path, detached = false, }: {
             const session = api.documents.documents.get(path);
             if (!session) return;
             if (detached) setLocalDraft(session.draft);
-            else if (useAppStore.getState().notePath === path) useAppStore.setState({ noteDraft: session.draft });
+            else {
+                const state = useAppStore.getState();
+                if (state.notePath === path && state.noteDraft !== session.draft) useAppStore.setState({ noteDraft: session.draft });
+            }
             setSaveStatus(session.error ? "error" : session.saving ? "saving" : session.base !== session.draft ? "dirty" : "saved");
             if (!session.error && !session.saving && session.base === session.draft) setLastSavedAt(Date.now());
         };

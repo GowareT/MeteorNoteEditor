@@ -17,6 +17,7 @@ import {
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
 import { open as openExternal } from "@tauri-apps/plugin-shell";
+import { clipboardImageFile, readClipboardImage } from "@/lib/clipboardImage";
 import { resolveCodeLanguage } from "@/lib/codeHighlight";
 import { searchKeymap } from "@codemirror/search";
 import {
@@ -403,6 +404,7 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
       runClipboard: async (command) => {
         const view = viewRef.current;
         if (!view) return;
+        if ((command === "cut" || command === "paste") && view.state.readOnly) return;
         view.focus();
         const { from, to } = view.state.selection.main;
         const selected = view.state.doc.sliceString(from, to);
@@ -420,6 +422,14 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
               selection: { anchor: from },
             });
           }
+          return;
+        }
+        let image: File | null = null;
+        try { image = await readClipboardImage(); }
+        catch { /* Native paste events remain available if clipboard.read is unsupported or denied. */ }
+        if (image) {
+          try { await insertDroppedImage(view, image, notePath); }
+          catch (error) { window.alert(t("插入图片失败：{0}", errorMessage(error))); }
           return;
         }
         try {
@@ -566,6 +576,15 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
           }),
           syncExt,
           EditorView.domEventHandlers({
+            paste(event, view) {
+              const file = clipboardImageFile(event.clipboardData);
+              if (!file) return false;
+              event.preventDefault();
+              if (!view.state.readOnly) {
+                void insertDroppedImage(view, file, notePath).catch(error => window.alert(t("插入图片失败：{0}", errorMessage(error))));
+              }
+              return true;
+            },
             click(event, view) {
               if (!view.state.readOnly) return false;
               const position = view.posAtCoords({ x: event.clientX, y: event.clientY });
@@ -687,12 +706,15 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
           blankHintComp.current.reconfigure(
             blankHintExtension(t("输入 / 插入内容")),
           ),
-          titleMetaComp.current.reconfigure(
-            sourceMode ? [] : titleMetaExtension(titleMeta),
-          ),
         ],
       });
-    }, [fontSize, libraryRootPath, notePath, sourceMode, titleMeta]);
+    }, [fontSize, libraryRootPath, notePath, sourceMode]);
+
+    useEffect(() => {
+      viewRef.current?.dispatch({effects: titleMetaComp.current.reconfigure(
+        sourceMode ? [] : titleMetaExtension(titleMeta),
+      )});
+    }, [sourceMode, titleMeta]);
 
     return (
       <div
