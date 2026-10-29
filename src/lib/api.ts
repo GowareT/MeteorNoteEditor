@@ -121,6 +121,13 @@ export async function libraryRootPath(): Promise<string> {
     cachedLibraryRootPath = await invoke<string>("library_root_path");
     return cachedLibraryRootPath;
 }
+export async function changeLibraryLocation(folder: string): Promise<string> {
+    await flushDrafts();
+    const root = await invoke<string>("change_library_location", {folder});
+    cachedLibraryRootPath = root;
+    window.dispatchEvent(new Event("mne-library-root-changed"));
+    return root;
+}
 export async function revealInFinder(path: string): Promise<void> {
     await invoke("reveal_in_finder", { path });
 }

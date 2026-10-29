@@ -22,6 +22,9 @@
 .mne-settings__storage > div { min-width: 0; }
 .mne-settings__storage p { margin: 6px 0 0; color: var(--mn-text-secondary); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .mne-settings__storage button { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap; }
+.mne-storage-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mne-storage-confirm { padding: 12px; border: 1px solid var(--mn-border); border-radius: 6px; }
+.mne-storage-confirm p { margin: 0 0 10px; overflow-wrap: anywhere; color: var(--mn-text-secondary); line-height: 1.6; }
 .mne-settings__about { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; padding-top: 22px; font-size: 12px; color: var(--mn-text-secondary); }
 @media (max-width: 620px) {
   .mne-settings__body { padding: 8px 20px 24px; }

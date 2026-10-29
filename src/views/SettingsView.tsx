@@ -5,6 +5,8 @@ import { FolderOpen, RotateCcw } from "lucide-react";
 import { settingsPrefs, APPEARANCE_OPTIONS, EDITOR_THEME_OPTIONS, type AppearanceMode, type EditorColorTheme } from "@/lib/settingsPrefs";
 import * as api from "@/lib/api";
 import { LibraryTransfer } from "@/components/LibraryTransfer";
+import {open} from "@tauri-apps/plugin-dialog";
+import {useAppStore} from "@/store/appStore";
 import { BrandSettings } from "@/components/BrandSettings";
 import "@/styles/pages.css";
 import "./SettingsView.css";
@@ -27,6 +29,29 @@ export function SettingsView() {
   const [menuBar, setMenuBar] = useState(settingsPrefs.getMenuBarIconEnabled);
   const [menuBarPending, setMenuBarPending] = useState(false);
   const [root, setRoot] = useState("");
+  const [chosenFolder, setChosenFolder] = useState("");
+  const [locationBusy, setLocationBusy] = useState(false);
+  const [locationMessage, setLocationMessage] = useState("");
+  const destination = chosenFolder ? `${chosenFolder.replace(/[\\/]+$/, '')}${currentPlatform() === 'windows' ? '\\' : '/'}MeteorNoteEditor` : '';
+  async function chooseLocation() {
+    setLocationBusy(true); setError(""); setLocationMessage("");
+    try {
+      const selected = await open({title:t("选择新的笔记保存文件夹"),directory:true,multiple:false,canCreateDirectories:true});
+      if (typeof selected === 'string') setChosenFolder(selected);
+    } catch(error) {setError(errorMessage(error));}
+    finally {setLocationBusy(false);}
+  }
+  async function migrateLocation() {
+    if (!chosenFolder || locationBusy) return;
+    setLocationBusy(true); setError(""); setLocationMessage("");
+    try {
+      const next = await api.changeLibraryLocation(chosenFolder);
+      setRoot(next); setChosenFolder("");
+      setLocationMessage(t("保存位置已更新，原目录保留为副本。后续编辑保存在新位置。"));
+      await useAppStore.getState().refresh();
+    } catch(error) {setError(errorMessage(error));}
+    finally {setLocationBusy(false);}
+  }
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
@@ -112,11 +137,20 @@ export function SettingsView() {
         </div>
         <div className="mne-settings__row mne-settings__storage">
           <div><span>{t("笔记存储位置")}</span><p>{root || t("正在读取…")}</p></div>
-          <button className="mn-toolbar-btn" disabled={!root} onClick={() => {
+          <div className="mne-storage-actions"><button className="mn-toolbar-btn" disabled={!root || locationBusy} onClick={() => {
             setError("");
             void api.revealInFinder("").catch(e => setError(errorMessage(e)));
           }}><FolderOpen size={16} />{revealFolderLabel()}</button>
+          <button className="mn-toolbar-btn" disabled={!root || locationBusy} onClick={() => void chooseLocation()}>{t("更改位置")}</button></div>
         </div>
+        {chosenFolder && <div className="mne-storage-confirm">
+          <p>{t("将保存到：{0}", destination)}</p>
+          <p>{t("确认后将复制全部笔记、附件、历史版本和回收站，校验成功后切换。原目录保留，不覆盖目标位置已有数据。")}</p>
+          <div className="mne-storage-actions"><button className="mn-toolbar-btn" disabled={locationBusy} onClick={() => void migrateLocation()}>{t("确认迁移")}</button>
+          <button className="mn-toolbar-btn" disabled={locationBusy} onClick={() => setChosenFolder("")}>{t("取消")}</button></div>
+        </div>}
+        {locationBusy && <p role="status">{t("正在处理保存位置，请稍候…")}</p>}
+        {locationMessage && <p role="status">{locationMessage}</p>}
       </section>
       <LibraryTransfer />
       <footer className="mne-settings__about"><span>MeteorNoteEditor</span><span>0.1.0 · MIT</span></footer>

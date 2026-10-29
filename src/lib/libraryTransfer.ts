@@ -20,7 +20,7 @@ export async function chooseLibraryTransfer(kind: TransferKind, notePath?: strin
   const timestamp = new Date().toISOString().slice(0, 19).replaceAll(":", "-");
   if (kind === "files" || kind === "folder" || kind === "restore") {
     const selected = await open({
-      title: kind === "restore" ? t("恢复笔记库备份") : t("导入 Markdown 到「{0}」", targetNotebookPath),
+      title: kind === "restore" ? t("导入全部数据（迁移包或旧备份）") : t("导入 Markdown 到「{0}」", targetNotebookPath),
       directory: kind === "folder", multiple: kind === "files",
       filters: kind === "folder" ? undefined : [{ name: kind === "restore" ? t("MeteorNoteEditor 备份") : "Markdown", extensions: kind === "restore" ? ["mnebackup"] : ["md", "markdown"] }],
     });
@@ -28,7 +28,7 @@ export async function chooseLibraryTransfer(kind: TransferKind, notePath?: strin
     paths = Array.isArray(selected) ? selected : [selected];
   } else {
     const selected = await save({
-      title: kind === "backup" ? t("备份笔记库") : t("导出当前笔记为 Markdown 文件夹（含图片）"),
+      title: kind === "backup" ? t("导出全部数据（迁移包）") : t("导出当前笔记为 Markdown 文件夹（含图片）"),
       defaultPath: kind === "backup" ? `MeteorNoteEditor-${timestamp}.mnebackup` : `${notePath!.split("/").pop()}-${timestamp}`,
       filters: kind === "backup" ? [{ name: t("MeteorNoteEditor 备份"), extensions: ["mnebackup"] }] : undefined,
     });

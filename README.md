@@ -102,9 +102,11 @@ The sample note library lives in memory and resets when the page reloads. Some p
 | macOS | `~/Library/Application Support/MeteorNoteEditor/Notebooks` |
 | Windows | `%APPDATA%\MeteorNoteEditor\Notebooks` |
 
-Each note has its own directory containing the Markdown document, image attachments, and version history. The `Trash` directory sits alongside `Notebooks`. You can open the local storage location from Settings (设置).
+Each note has its own directory containing the Markdown document, image attachments, and version history. The `Trash` directory sits alongside `Notebooks`. The document tree remembers which folders you expanded or collapsed, including when all folders are collapsed.
 
-Use **Markdown export** to save the current note with its images for other Markdown tools. Use a **`.mnebackup` backup** to preserve the full library, including attachments, history, and trash. Backups do not include appearance preferences and are not encrypted. See [import, export, and backup (Chinese)](docs/USER_GUIDE.md#导入导出与备份) for details.
+To change the storage location, open **Settings → Notes location → Change location**, select a parent folder, then choose **Confirm migration**. Verified copies are placed in `<selected folder>/MeteorNoteEditor/`; future edits use the new location, and the original remains as a separate copy. Existing destination data is never overwritten. Close other independent app windows first. Keep external drives connected while using their libraries.
+
+Use **Markdown export** to save the current note with its images for other Markdown tools. For a complete Windows/macOS transfer, use **Settings → Data migration and backup → Export all data (migration package)**, copy the `.mnebackup` file to the other computer, then choose **Import migration package** there. Notes, attachments, notebook structure/order, icons, history, trash and available note timestamps are preserved. Imports create a new notebook group without overwriting existing notes; older `.mnebackup` files remain supported. Packages contain up to 256 MB of data or 50,000 entries, exclude device preferences (including favorites and tree display state), and are not encrypted. Windows filename restrictions still apply. See [import, export, and backup (Chinese)](docs/USER_GUIDE.md#导入导出与备份) for details.
 
 ## Documentation and contributing
 

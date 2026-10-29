@@ -2,6 +2,8 @@ import { EditorSelection } from "@codemirror/state";
 import { EditorView, type KeyBinding } from "@codemirror/view";
 import { applyFormat, unwrapInlineFormats } from "@/lib/cm6/mdFormat";
 import { alignmentBlocks } from "./alignment";
+import { syntaxTree } from "@codemirror/language";
+import { completionStatus } from "@codemirror/autocomplete";
 
 type ListLine = {
   indent: string;
@@ -274,6 +276,42 @@ function continueOrExitList(view: EditorView) {
     changes: { from: sel.head, to: sel.head, insert },
     selection: EditorSelection.cursor(sel.head + insert.length),
   });
+  return true;
+}
+
+/** Balance inline delimiters when Enter splits formatted list text. */
+export function continueFormattedList(view: EditorView) {
+  const {state} = view;
+  if (state.readOnly || view.composing || view.dom.closest('.is-source') || completionStatus(state) === 'active') return false;
+  const sel = state.selection.main;
+  if (!sel.empty || state.selection.ranges.length !== 1) return false;
+  const line = state.doc.lineAt(sel.head), info = parseListLine(line.text);
+  if (!info || !info.content.trim()) return false;
+  const after = state.doc.sliceString(sel.head, line.to);
+  let from = sel.head, close = '', open = '';
+  if (after.trim() && INLINE_CLOSERS_ONLY_RE.test(after)) {
+    // The visible end of bold text is before its hidden closing **.
+    from = line.to;
+  } else {
+    const pairs: Array<{from: number; openTo: number; open: string; close: string}> = [];
+    for (let node = syntaxTree(state).resolveInner(sel.head, -1); node; node = node.parent!) {
+      if (!['StrongEmphasis', 'Emphasis', 'Strikethrough', 'InlineCode'].includes(node.name)) continue;
+      const first = node.firstChild, last = node.lastChild;
+      if (!first || !last || first === last || first.to > sel.head || last.from < sel.head || node.from < line.from + info.prefixLength) continue;
+      pairs.push({from: node.from, openTo: first.to,
+        open: state.doc.sliceString(first.from, first.to), close: state.doc.sliceString(last.from, last.to)});
+    }
+    if (!pairs.length) return false;
+    // At the start of formatted text, keep all delimiters with the right half.
+    if (pairs[0].openTo === sel.head) from = pairs.at(-1)!.from;
+    else {
+      close = pairs.map(pair => pair.close).join('');
+      open = pairs.map(pair => pair.open).reverse().join('');
+    }
+  }
+  const insert = `${close}\n${nextListPrefix(info)}${open}`;
+  view.dispatch({changes: {from, insert}, selection: EditorSelection.cursor(from + insert.length),
+    scrollIntoView: true, userEvent: 'input'});
   return true;
 }
 

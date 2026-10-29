@@ -3,6 +3,7 @@ mod models;
 mod storage;
 mod transfer;
 mod lifecycle;
+mod location;
 pub mod pdf;
 
 use models::*;
@@ -43,7 +44,7 @@ fn default_menu_bar_icon_enabled() -> bool {
 }
 
 fn app_prefs_path() -> LibraryResult<PathBuf> {
-    Ok(models::paths::app_support()?.join(APP_PREFS_FILE))
+    Ok(models::paths::config_support()?.join(APP_PREFS_FILE))
 }
 
 fn read_app_prefs() -> AppPrefs {
@@ -369,6 +370,24 @@ fn library_root_path() -> Result<String, LibraryError> {
 }
 
 #[tauri::command]
+async fn change_library_location(app: AppHandle, folder: String) -> LibraryResult<String> {
+    if app.webview_windows().len() > 1 {
+        return Err(LibraryError::Message("请先关闭其他独立窗口，再更改保存位置".into()));
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let _guard = storage::lock()?;
+        library::ensure_roots()?;
+        let config = models::paths::config_support()?;
+        let source = models::paths::app_support()?;
+        let dest = location::migrate(&source, &folder, &config, |path| {
+            app.asset_protocol_scope().allow_directory(path, true)
+                .map_err(|e| LibraryError::Message(e.to_string()))
+        })?;
+        Ok(dest.join("Notebooks").display().to_string())
+    }).await.map_err(|e| LibraryError::Message(e.to_string()))?
+}
+
+#[tauri::command]
 async fn search_notes(query: String) -> LibraryResult<Vec<transfer::SearchHit>> {
     tauri::async_runtime::spawn_blocking(move || { let _guard = storage::lock()?; transfer::search(&query) })
         .await.map_err(|e| LibraryError::Message(e.to_string()))?
@@ -437,8 +456,12 @@ pub fn run() {
             permanently_delete_trash_item,
             empty_trash,
             library_root_path,
+            change_library_location,
         ])
         .setup(|app| {
+            if let Ok(root) = models::paths::app_support() {
+                app.asset_protocol_scope().allow_directory(&root, true)?;
+            }
             let _ = library::ensure_roots();
             app.on_menu_event(|app, event| {
                 if event.id().as_ref() == "tray-show" {

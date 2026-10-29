@@ -3,7 +3,7 @@ import { syntaxTree } from "@codemirror/language";
 import { EditorSelection, StateField, EditorState } from "@codemirror/state";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { defaultKeymap, history, historyKeymap, isolateHistory } from "@codemirror/commands";
-import { cellInRange, tableCellRange, type CellPosition, type CellRange } from "./tableSelection";
+import { cellInRange, tableCellRange, nextTableCell, type CellDirection, type CellPosition, type CellRange } from "./tableSelection";
 import { applyFormat as applyInlineFormat, detectFormatMarksAtSelection } from "./mdFormat";
 import { CODE_LANGUAGE_OPTIONS, resolveCodeLanguage } from "@/lib/codeHighlight";
 import {
@@ -840,6 +840,18 @@ class TableWidget extends WidgetType {
     }, true);
     wrap.addEventListener("keydown", event => {
       if (event.isComposing) return;
+      if (event.target === wrap && !event.metaKey && !event.ctrlKey && !event.altKey && (event.key === 'Tab' || !event.shiftKey)) {
+        const directions: Record<string,CellDirection> = {Tab:event.shiftKey?'previous':'next',ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
+        const direction = directions[event.key];
+        const current = selected ?? {row:0,col:0};
+        const editor = widget.cellViews.get(cellKey(current.row,current.col));
+        if (direction && editor && !view.state.readOnly) {
+          event.preventDefault();event.stopPropagation();
+          editor.focus();
+          moveCell(editor,current,direction);
+          return;
+        }
+      }
       if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "a") {
         const editor = selected ? widget.cellViews.get(cellKey(selected.row, selected.col)) : null;
         // First Mod-A selects text in a cell; a second selects the whole table.
@@ -1095,6 +1107,9 @@ class TableWidget extends WidgetType {
                 EditorState.transactionFilter.of(tr => view.state.readOnly && tr.docChanged ? [] : tr),
                 tableCellBaseExtensions,
                 keymap.of([
+                  ...([['Tab','next'],['Shift-Tab','previous'],['ArrowUp','up'],['ArrowDown','down'],['ArrowLeft','left'],['ArrowRight','right']] as const).map(([key,direction])=>({
+                    key, run:(inner:EditorView)=>moveCell(inner,{row,col},direction),
+                  })),
                   ...(["bold", "italic", "underline", "strike"] as const).map((type, index) => ({
                     key: ["Mod-b", "Mod-i", "Mod-u", "Mod-Shift-x"][index],
                     run: (inner: EditorView) => { applyInlineFormat(inner, { type }); return true; },
@@ -1135,6 +1150,24 @@ class TableWidget extends WidgetType {
       makeRow(model.header, 0, thead);
       model.rows.forEach((row, index) => makeRow(row, index + 1, tbody));
       grid.append(thead, tbody);
+    };
+
+    const moveCell = (inner: EditorView, current: CellPosition, direction: CellDirection) => {
+      if (view.state.readOnly || inner.compositionStarted) return false;
+      const cells = Array.from(grid.querySelectorAll<HTMLTableCellElement>('[data-cell]'), cell=>({
+        ...parseCellKey(cell.dataset.cell!)!, rowSpan:cell.rowSpan,colSpan:cell.colSpan,
+      }));
+      const next = nextTableCell(cells,current,direction);
+      // Consume the key at table edges too, so focus never falls onto a button.
+      if (!next) return true;
+      const target = widget.cellViews.get(cellKey(next.row,next.col));
+      if (!target) return true;
+      const head = direction === 'previous' || direction === 'left' ? target.state.doc.length
+        : direction === 'up' || direction === 'down' ? Math.min(inner.state.selection.main.head,target.state.doc.length) : 0;
+      selectCell(next.row,next.col);
+      target.dispatch({selection:EditorSelection.cursor(head),scrollIntoView:true});
+      target.focus();
+      return true;
     };
 
     const resizeHandle = (kind: "col" | "row", col: number, row: number) => {

@@ -425,7 +425,23 @@ fn read_note_meta(pkg: &Path) -> NoteMeta {
         .unwrap_or(NoteMeta {
             icon: "document".into(),
             color_hex: None,
+            created_at: None,
         })
+}
+
+pub(crate) fn portable_note_meta(path: &Path) -> LibraryResult<Vec<u8>> {
+    let bytes = fs::read(path)?;
+    if let Ok(mut value) = serde_json::from_slice::<serde_json::Value>(&bytes) {
+        if let Some(object) = value.as_object_mut() {
+            if object.get("createdAt").is_none_or(|value| value.is_null()) {
+                if let Some(time) = path.parent().and_then(file_created_at) {
+                    object.insert("createdAt".into(), serde_json::Value::String(time.to_rfc3339()));
+                    return Ok(serde_json::to_vec(&value)?);
+                }
+            }
+        }
+    }
+    Ok(bytes)
 }
 
 fn write_note_meta(pkg: &Path, meta: &NoteMeta) -> LibraryResult<()> {
@@ -459,7 +475,7 @@ fn scan_notes(dir: &Path, notebook_path: &str) -> LibraryResult<Vec<LibraryNote>
             notebook_path: notebook_path.to_string(),
             icon: meta.icon,
             color_hex: meta.color_hex,
-            created_at: file_created_at(&path).map(|time| time.to_rfc3339()),
+            created_at: meta.created_at.or_else(|| file_created_at(&path)).map(|time| time.to_rfc3339()),
             modified_at,
         });
     }
@@ -514,6 +530,7 @@ fn ensure_note_package(pkg: &Path) -> LibraryResult<()> {
             &NoteMeta {
                 icon: "document".into(),
                 color_hex: None,
+                created_at: file_created_at(pkg),
             },
         )?;
     }
@@ -1381,7 +1398,7 @@ pub fn move_note_to_trash(path: &str) -> LibraryResult<()> {
     if !is_note_package(&source) {
         return Err(LibraryError::Message(format!("不是有效笔记包：{path}")));
     }
-    let created_at = file_created_at(&source);
+    let created_at = read_note_meta(&source).created_at.or_else(|| file_created_at(&source));
     let title = source
         .file_name()
         .and_then(|n| n.to_str())

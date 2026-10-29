@@ -221,12 +221,15 @@ export function NoteEditorView({ path, detached = false, }: {
     const [libraryRootPath, setLibraryRootPath] = useState<string | null>(null);
     useEffect(() => {
         let cancelled = false;
-        void api.libraryRootPath().then((root) => {
+        const update = () => { void api.libraryRootPath().then((root) => {
             if (!cancelled)
                 setLibraryRootPath(root);
-        });
+        }).catch(() => {}); };
+        update();
+        window.addEventListener("mne-library-root-changed", update);
         return () => {
             cancelled = true;
+            window.removeEventListener("mne-library-root-changed", update);
         };
     }, []);
     const outlinePanel = useResizablePanelWidth(OUTLINE_WIDTH_KEY, OUTLINE_WIDTH_DEFAULT, {

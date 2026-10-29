@@ -1,6 +1,22 @@
 export type CellPosition = {row: number; col: number};
 export type CellRange = {top: number; bottom: number; left: number; right: number};
-type CellSpan = CellPosition & {rowSpan: number; colSpan: number};
+export type CellSpan = CellPosition & {rowSpan: number; colSpan: number};
+export type CellDirection = 'next' | 'previous' | 'up' | 'down' | 'left' | 'right';
+
+export function nextTableCell(cells: readonly CellSpan[], current: CellPosition, direction: CellDirection): CellPosition | null {
+  const ordered = [...cells].sort((a,b)=>a.row-b.row || a.col-b.col);
+  const index = ordered.findIndex(cell=>cell.row===current.row && cell.col===current.col);
+  const cell = ordered[index];
+  if (!cell) return null;
+  if (direction === 'next' || direction === 'previous') {
+    const next = ordered[index + (direction === 'next' ? 1 : -1)];
+    return next ? {row:next.row,col:next.col} : null;
+  }
+  const row = direction === 'up' ? cell.row-1 : direction === 'down' ? cell.row+cell.rowSpan : cell.row;
+  const col = direction === 'left' ? cell.col-1 : direction === 'right' ? cell.col+cell.colSpan : cell.col;
+  const next = ordered.find(cell=>row>=cell.row && row<cell.row+cell.rowSpan && col>=cell.col && col<cell.col+cell.colSpan);
+  return next ? {row:next.row,col:next.col} : null;
+}
 
 /** Expand to include whole merged cells, including merges touched by expansion. */
 export function tableCellRange(anchor: CellPosition, head: CellPosition, cells: CellSpan[]): CellRange {

@@ -10,7 +10,11 @@ const MAX_ENTRIES: usize = 50_000;
 fn invalid(message: impl Into<String>) -> LibraryError { LibraryError::Message(message.into()) }
 
 #[derive(Serialize, Deserialize)]
-struct Entry { path: String, data: Option<String>, sha256: Option<String> }
+struct Entry {
+    path: String, data: Option<String>, sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    modified_at: Option<chrono::DateTime<chrono::Utc>>,
+}
 #[derive(Serialize, Deserialize)]
 struct Backup { format: String, version: u32, entries: Vec<Entry> }
 #[derive(Serialize)]
@@ -40,17 +44,19 @@ fn collect(root: &Path, relative: &str, entries: &mut Vec<Entry>, size: &mut u64
     let path = root.join(safe_relative(relative)?);
     let meta = regular(&path)?;
     if meta.is_dir() {
-        entries.push(Entry { path: relative.into(), data: None, sha256: None });
+        entries.push(Entry { path: relative.into(), data: None, sha256: None, modified_at: None });
         for entry in fs::read_dir(path)? {
             let name = entry?.file_name().into_string().map_err(|_| invalid("文件名不是有效 UTF-8"))?;
             if name.starts_with(".mne-write-") { continue; }
             collect(root, &format!("{relative}/{name}"), entries, size)?;
         }
     } else {
-        *size += meta.len();
+        if meta.len() > LIMIT.saturating_sub(*size) { return Err(invalid("单次操作最多支持 256 MB")); }
+        let bytes = if path.file_name().is_some_and(|name| name == ".note.json") { library::portable_note_meta(&path)? } else { fs::read(&path)? };
+        *size += bytes.len() as u64;
         if *size > LIMIT { return Err(invalid("单次操作最多支持 256 MB")); }
-        let bytes = fs::read(path)?;
-        entries.push(Entry { path: relative.into(), sha256: Some(format!("{:x}", Sha256::digest(&bytes))), data: Some(STANDARD.encode(bytes)) });
+        entries.push(Entry { path: relative.into(), sha256: Some(format!("{:x}", Sha256::digest(&bytes))), data: Some(STANDARD.encode(bytes)),
+            modified_at: meta.modified().ok().map(Into::into) });
     }
     Ok(())
 }
@@ -111,7 +117,10 @@ pub fn restore(source: &str) -> LibraryResult<TransferResult> {
             if decoded_size > LIMIT { return Err(invalid("备份超过 256 MB 限制")); }
             if entry.sha256.as_deref() != Some(&format!("{:x}", Sha256::digest(&bytes))) { return Err(invalid("备份校验失败，数据未恢复")); }
             fs::create_dir_all(dest.parent().unwrap())?;
-            atomic_write(dest, bytes)?;
+            atomic_write(&dest, bytes)?;
+            if let Some(time) = entry.modified_at {
+                fs::OpenOptions::new().write(true).open(&dest)?.set_times(fs::FileTimes::new().set_modified(time.into()))?;
+            }
         } else { fs::create_dir_all(dest)?; }
     }
     let notebook_root = work.0.join("Notebooks");
@@ -362,6 +371,8 @@ mod tests {
             let deleted = library::create_note(&nb, Some("已删除".into())).unwrap();
             library::move_note_to_trash(&deleted).unwrap();
             let backup_path = base.join("test.mnebackup");
+            let original_time = fs::metadata(pkg.join("原文.md")).unwrap().modified().unwrap();
+            let original_meta: serde_json::Value = serde_json::from_slice(&fs::read(pkg.join(".note.json")).unwrap()).unwrap();
             backup(backup_path.to_str().unwrap()).unwrap();
             library::write_note(&note, "# 原文\n\n当前内容\n").unwrap();
             let result = restore(backup_path.to_str().unwrap()).unwrap();
@@ -369,6 +380,9 @@ mod tests {
             let restored = format!("{}/{}", result.path, note);
             assert!(library::read_note(&restored).unwrap().contains("备份内容"));
             assert_eq!(fs::read(paths::notebook_path(&restored).unwrap().join("assets/a.png")).unwrap(), b"image bytes");
+            assert_eq!(fs::metadata(paths::notebook_path(&restored).unwrap().join("原文.md")).unwrap().modified().unwrap(), original_time);
+            let restored_meta: serde_json::Value = serde_json::from_slice(&fs::read(paths::notebook_path(&restored).unwrap().join(".note.json")).unwrap()).unwrap();
+            assert_eq!(restored_meta["createdAt"], original_meta["createdAt"]);
             assert!(!library::list_note_versions(&restored).unwrap().is_empty());
             let trash = library::list_trash().unwrap();
             assert_eq!(trash.len(), 2);
@@ -393,6 +407,16 @@ mod tests {
                 assert_eq!(library::list_notebooks().unwrap().len(), before);
                 assert!(!base.join("escape").exists());
             }
+        });
+    }
+    #[test]
+    fn legacy_packages_without_timestamps_still_restore() {
+        fixture(|base, _| {
+            let file = base.join("legacy.mnebackup"); backup(file.to_str().unwrap()).unwrap();
+            let mut archive: serde_json::Value = serde_json::from_slice(&fs::read(&file).unwrap()).unwrap();
+            for entry in archive["entries"].as_array_mut().unwrap() { entry.as_object_mut().unwrap().remove("modified_at"); }
+            atomic_write(&file, serde_json::to_vec(&archive).unwrap()).unwrap();
+            assert!(restore(file.to_str().unwrap()).is_ok());
         });
     }
     #[test]

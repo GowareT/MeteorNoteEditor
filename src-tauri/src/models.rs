@@ -67,6 +67,8 @@ pub(crate) struct NoteMeta {
     #[serde(default = "default_note_icon_meta")]
     pub icon: String,
     pub color_hex: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 fn default_note_icon_meta() -> String {
@@ -131,13 +133,19 @@ pub mod paths {
         test()
     }
 
-    pub fn app_support() -> Result<PathBuf, LibraryError> {
+    pub fn config_support() -> Result<PathBuf, LibraryError> {
         #[cfg(test)]
         if let Some(root) = TEST_ROOT.with(|slot| slot.borrow().clone()) { return Ok(root); }
         let base = dirs::data_dir()
             .or_else(dirs::home_dir)
             .ok_or_else(|| LibraryError::Message("无法定位用户数据目录".into()))?;
         Ok(base.join("MeteorNoteEditor"))
+    }
+
+    pub fn app_support() -> Result<PathBuf, LibraryError> {
+        #[cfg(test)]
+        if let Some(root) = TEST_ROOT.with(|slot| slot.borrow().clone()) { return Ok(root); }
+        crate::location::read_location(&config_support()?)
     }
 
     pub fn notebooks_root() -> Result<PathBuf, LibraryError> {

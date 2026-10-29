@@ -483,6 +483,7 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
       },
       ".cm-lp-table-wrap": {
         display: "block",
+        position: "relative",
         width: "100%",
         // Block widget height measurement excludes margins. Keep spacing
         // inside the measured box so mouse coordinates below it stay correct.
@@ -498,12 +499,17 @@ export function meteorNoteEditorTheme(fontSize: number, monospace: boolean) {
       },
       ".cm-lp-table-wrap:focus": { outline: "none" },
       ".cm-lp-table-controls": {
-        display: "flex", justifyContent: "flex-end", gap: "8px", paddingBottom: "6px",
+        position: "absolute", top: "0", right: "10px", zIndex: "7",
+        display: "flex", justifyContent: "flex-end", gap: "6px",
+        visibility: "hidden", pointerEvents: "none",
+      },
+      ".cm-lp-table-wrap:hover > .cm-lp-table-controls, .cm-lp-table-wrap:focus-within > .cm-lp-table-controls": {
+        visibility: "visible", pointerEvents: "auto",
       },
       ".cm-lp-table-controls button": {
         font: "inherit", fontSize: "12px", color: "var(--mn-text-muted)",
-        background: "transparent", border: "1px solid color-mix(in srgb, var(--mn-text) 12%, transparent)",
-        borderRadius: "5px", padding: "3px 8px", cursor: "pointer",
+        lineHeight: "16px", background: "var(--mn-surface)", border: "1px solid color-mix(in srgb, var(--mn-text) 12%, transparent)",
+        borderRadius: "5px", padding: "2px 6px", cursor: "pointer",
       },
       ".cm-lp-table-controls button:hover, .cm-lp-table-controls button:focus-visible": {
         color: "var(--mn-accent)", background: "color-mix(in srgb, var(--mn-accent) 7%, transparent)",

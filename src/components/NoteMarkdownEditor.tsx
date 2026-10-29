@@ -25,6 +25,7 @@ import {
   Annotation,
   EditorSelection,
   EditorState,
+  Prec,
   StateField,
   type Extension,
   type Text,
@@ -50,7 +51,7 @@ import {
 } from "@/lib/cm6/slashCommands";
 import { alignmentMarkdown } from "@/lib/cm6/alignment";
 import { livePreviewExtension } from "@/lib/cm6/livePreview";
-import { markdownEditingKeymap } from "@/lib/cm6/markdownEditingKeys";
+import { continueFormattedList, markdownEditingKeymap } from "@/lib/cm6/markdownEditingKeys";
 import { mathPreviewExtension } from "@/lib/cm6/mathPreview";
 import {
   meteorNoteEditorTheme,
@@ -531,6 +532,9 @@ export const NoteMarkdownEditor = forwardRef<NoteMarkdownEditorHandle, Props>(
           history(),
           dropCursor(),
           closeBrackets(),
+          // Markdown's built-in Enter binding has high precedence too.
+          // Handle only formatted-list splits before it can divide hidden delimiters.
+          Prec.highest(keymap.of([{key: "Enter", run: continueFormattedList}])),
           markdown({
             base: markdownLanguage,
             extensions: [alignmentMarkdown],

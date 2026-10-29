@@ -117,6 +117,37 @@ document.querySelector('#run')!.addEventListener('click',async()=>{
     Array.from(view.dom.querySelectorAll<HTMLButtonElement>('.cm-lp-table-actions button')).find(b=>b.textContent==='合并所选单元格')!.click();
     await tick(); check((cell(view,'1:0') as HTMLTableCellElement).rowSpan===2,'Cell menu keeps the multi-selection when merging');
 
+    view=make(); await tick();
+    const navigate = async (from:string, value:string, to:string, extra:KeyboardEventInit={}) => {
+      const inner=EditorView.findFromDOM(cell(view,from).querySelector('.cm-content')!)!;
+      inner.focus();inner.dispatch({selection:{anchor:Math.min(1,inner.state.doc.length)}});
+      key(inner.contentDOM,value,extra);await tick();
+      check(cell(view,to).contains(document.activeElement)&&document.activeElement?.tagName!=='BUTTON',`${value} from ${from} focuses cell ${to}, skipping buttons`);
+    };
+    await navigate('1:0','Tab','1:1');
+    await navigate('0:2','Tab','1:0');
+    await navigate('1:0','Tab','0:2',{shiftKey:true});
+    await navigate('1:1','ArrowUp','0:1');
+    await navigate('1:1','ArrowDown','2:1');
+    await navigate('1:1','ArrowLeft','1:0');
+    await navigate('1:1','ArrowRight','1:2');
+    await navigate('2:2','Tab','2:2');
+    await navigate('0:0','Tab','0:0',{shiftKey:true});
+    check(view.state.doc.toString()===source,'Keyboard cell navigation never changes table contents');
+    choose(view,'1:0','2:1');key(wrap(view),'Tab');await tick();
+    check(cell(view,'1:1').contains(document.activeElement),'Tab from a cell-range selection also skips action buttons');
+    const composingEditor=EditorView.findFromDOM(cell(view,'1:0').querySelector('.cm-content')!)!;
+    composingEditor.focus();
+    composingEditor.contentDOM.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));
+    key(composingEditor.contentDOM,'ArrowRight',{isComposing:true});await tick();
+    check(composingEditor.hasFocus&&view.state.doc.toString()===source,'IME composition arrow keys do not navigate away or change contents');
+    composingEditor.contentDOM.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));
+    choose(view,'1:0','2:1');action(view,'合并所选单元格');await tick();
+    await navigate('1:0','Tab','1:2');
+    await navigate('0:1','ArrowDown','1:0');
+    await navigate('1:2','ArrowLeft','1:0');
+    await navigate('1:0','ArrowRight','1:2');
+
     view=make(source,true); await tick();
     choose(view,'0:0','2:2'); key(wrap(view),'Delete'); await tick();
     check(view.state.doc.toString()===source,'Read-only selection cannot delete content');

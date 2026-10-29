@@ -3,6 +3,7 @@ import { create } from "zustand";
 import type { LibraryNotebook, LibraryNote, SidebarPage } from "@/types/library";
 import * as api from "@/lib/api";
 import { reconcileNotebooks } from "@/lib/librarySnapshot";
+import {readNotebookExpansion, writeNotebookExpansion} from "@/lib/notebookExpansion";
 
 export const SIDEBAR_WIDTH_DEFAULT = 240;
 export const SIDEBAR_WIDTH_MIN = 200;
@@ -384,10 +385,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const notebooks = await api.loadLibrary();
       const trash = await api.listTrash();
+      const storedExpansion = readNotebookExpansion();
+      const paths = new Set<string>();
+      const visit = (nodes: LibraryNotebook[]) => nodes.forEach(node => {paths.add(node.id); visit(node.children);});
+      visit(notebooks);
       set({
         notebooks,
         trashCount: trash.length,
-        expandedNotebooks: new Set(notebooks.map((n) => n.id)),
+        expandedNotebooks: storedExpansion === null ? new Set(notebooks.map(n => n.id))
+          : new Set([...storedExpansion].filter(path => paths.has(path))),
         loading: false,
       });
     } catch (e) {
@@ -1062,3 +1068,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   clearError: () => set({ error: null }),
 }));
+
+useAppStore.subscribe((state, previous) => {
+  if (state.expandedNotebooks !== previous.expandedNotebooks) writeNotebookExpansion(state.expandedNotebooks);
+});
