@@ -1,5 +1,27 @@
 use tauri::WebviewWindow;
 
+// WebView2 has already closed the generated file. Only flush the writable
+// destination: FlushFileBuffers rejects a read-only handle on Windows (error 5).
+// Copying also supports destinations on filesystems without hard links.
+#[cfg(any(target_os = "windows", test))]
+fn publish_windows_pdf(temporary: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
+    use std::io::{Read, Seek};
+    let mut source = std::fs::File::open(temporary)?;
+    let mut signature = [0; 5];
+    source.read_exact(&mut signature)?;
+    if &signature != b"%PDF-" {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "系统没有生成有效 PDF"));
+    }
+    source.rewind()?;
+    // Never truncate an existing destination, including one created since the
+    // save dialog closed. On failure, remove only the file we just created.
+    let mut output = std::fs::OpenOptions::new().write(true).create_new(true).open(destination)?;
+    let result = std::io::copy(&mut source, &mut output).and_then(|_| output.sync_all());
+    drop(output);
+    if result.is_err() { let _ = std::fs::remove_file(destination); }
+    result
+}
+
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 static PDF_BUSY: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -141,14 +163,7 @@ mod windows_native {
             let result = (|| {
                 status.map_err(|e| e.to_string())?;
                 if !success { return Err("PDF 生成失败或已取消".into()); }
-                let mut file = std::fs::File::open(&temporary.0).map_err(|e| e.to_string())?;
-                let mut signature = [0; 5];
-                std::io::Read::read_exact(&mut file, &mut signature).map_err(|e| e.to_string())?;
-                if &signature != b"%PDF-" { return Err("系统没有生成有效 PDF".into()); }
-                file.sync_all().map_err(|e| e.to_string())?;
-                drop(file);
-                // A hard link publishes without overwriting an existing destination.
-                std::fs::hard_link(&temporary.0, &destination).map_err(|e| e.to_string())?;
+                super::publish_windows_pdf(&temporary.0, &destination).map_err(|e| e.to_string())?;
                 Ok(())
             })();
             drop(temporary);
@@ -157,5 +172,58 @@ mod windows_native {
             Ok(())
         }));
         webview.PrintToPdf(PCWSTR(path.as_ptr()), &settings, &callback).map_err(|e| e.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::publish_windows_pdf;
+    use std::{fs, io::ErrorKind, path::PathBuf};
+
+    struct Fixture(PathBuf);
+    impl Fixture {
+        fn new() -> Self {
+            let root = std::env::temp_dir().join(format!("mne-pdf-test-{}", uuid::Uuid::new_v4()));
+            fs::create_dir(&root).unwrap();
+            Self(root)
+        }
+    }
+    impl Drop for Fixture { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+
+    #[test]
+    fn generated_pdf_is_saved_and_flushed_with_a_writable_handle() {
+        let fixture = Fixture::new();
+        let source = fixture.0.join("generated.pdf");
+        let destination = fixture.0.join("中文笔记.pdf");
+        let bytes = b"%PDF-1.7\nregression fixture\n%%EOF";
+        fs::write(&source, bytes).unwrap();
+        publish_windows_pdf(&source, &destination).unwrap();
+        assert_eq!(fs::read(&destination).unwrap(), bytes);
+        assert_eq!(fs::read(&source).unwrap(), bytes);
+    }
+
+    #[test]
+    fn existing_destination_is_never_overwritten() {
+        let fixture = Fixture::new();
+        let source = fixture.0.join("generated.pdf");
+        let destination = fixture.0.join("existing.pdf");
+        fs::write(&source, b"%PDF-1.7\nnew").unwrap();
+        fs::write(&destination, b"original").unwrap();
+        assert_eq!(publish_windows_pdf(&source, &destination).unwrap_err().kind(), ErrorKind::AlreadyExists);
+        assert_eq!(fs::read(&destination).unwrap(), b"original");
+    }
+
+    #[test]
+    fn invalid_or_missing_pdf_does_not_create_destination() {
+        let fixture = Fixture::new();
+        let source = fixture.0.join("generated.pdf");
+        let destination = fixture.0.join("note.pdf");
+        assert_eq!(publish_windows_pdf(&source, &destination).unwrap_err().kind(), ErrorKind::NotFound);
+        fs::write(&source, b"not a PDF").unwrap();
+        assert_eq!(publish_windows_pdf(&source, &destination).unwrap_err().kind(), ErrorKind::InvalidData);
+        assert!(!destination.exists());
+        fs::write(&source, b"%PDF").unwrap();
+        assert_eq!(publish_windows_pdf(&source, &destination).unwrap_err().kind(), ErrorKind::UnexpectedEof);
+        assert!(!destination.exists());
     }
 }
